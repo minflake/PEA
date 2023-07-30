@@ -588,7 +588,7 @@
                     
                     } else {
                       require_once("../../conexao.php");
-                    $query_listar_alunos = $pdo -> query("SELECT
+                      $query_listar_alunos = $pdo -> query("SELECT
                       aluno.cod_aluno,
                       aluno.ra,
                       aluno.nome,

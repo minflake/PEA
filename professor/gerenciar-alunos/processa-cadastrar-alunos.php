@@ -41,8 +41,10 @@ $cpf = str_replace('-', '', $cpf);
 
 //GUARDA AS ENTRADAS NO BANCO
 try {
-    $query_guarda_tabela_aluno = $pdo -> prepare("INSERT INTO aluno SET nome = :nome, sobrenome = :sobrenome, data_nascimento = :data_nascimento, cpf = :cpf, ra = :ra, email = :email, semestre = :semestre");
+    $query_guarda_tabela_aluno = $pdo -> prepare("INSERT INTO aluno SET cod_curso = 
+    :cod_curso, nome = :nome, sobrenome = :sobrenome, data_nascimento = :data_nascimento, cpf = :cpf, ra = :ra, email = :email, semestre = :semestre");
 
+    $query_guarda_tabela_aluno -> bindValue(":cod_curso", "$curso");
     $query_guarda_tabela_aluno -> bindValue(":nome", "$nome");
     $query_guarda_tabela_aluno -> bindValue(":sobrenome", "$sobrenome");
     $query_guarda_tabela_aluno -> bindValue(":data_nascimento", "$data_nascimento_formatado");
@@ -88,6 +90,7 @@ try {
     header('Location: cadastrar-alunos.php');
 
 } catch (\Throwable $th) {
+    echo $th;
     $_SESSION['status_formulario'] = false;
     header('Location: cadastrar-alunos.php');
 }

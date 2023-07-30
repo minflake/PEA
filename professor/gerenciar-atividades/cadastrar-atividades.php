@@ -396,54 +396,190 @@
     
     <div class="card">
             <div class="card-body">
-              <h5 class="card-title">Floating labels Form</h5>
+              <h5 class="card-title">Informe os dados a atividade a ser feita.</h5>
               
               <!-- Floating Labels Form -->
-              <form class="row g-3">
+              <form id="atividadesForm" class="row g-3 needs-validation" novalidate action="processa-cadastrar-atividades.php" method="post">
                 <div class="col-md-8">
                   <div class="form-floating">
-                    <textarea class="form-control" placeholder="Tipo de Atividade" id="floatingTipoAtividade" ></textarea>
+                    <textarea class="form-control" placeholder="Tipo de Atividade" id="floatingTipoAtividade" name="tipoAtividade" required></textarea>
                     <label for="floatingTipoAtividade">Tipo de Atividade</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Informe o Tipo de Atividade
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="form-floating">
-                    <input type="text" class="form-control" id="floatingCategoria" placeholder="Categoria">
-                    <label for="floatingCategoria">Categoria</label>
+                    <select class="form-select" id="selectCategoria" name="categoria" required>
+                      <option value="" selected disabled>Selecione a categoria</option>
+                      <option value="Acadêmico-científico">Acadêmico-científico</option>
+                      <option value="Cultural">Cultural</option>
+                      <option value="Social">Social</option>
+                    </select>
+                    <label for="floatingSelect">Categoria</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Informe a categoria.
                   </div>
                 </div>
                 <div class="col-md-7">
                   <div class="form-floating">
-                    <textarea class="form-control" placeholder="Address" id="floatingTextarea" style="height: 132px;"></textarea>
+                    <textarea class="form-control" placeholder="" id="floatingDescricaoAtividade" style="height: 132px;" name="descricaoAtividade" required></textarea>
                     <label for="floatingPassword">Descrição da Atividade</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Insira a descrição da atividade.
                   </div>
                 </div>
 
                 <div class="col-md-5">
                   <div class="form-floating">
-                    <textarea class="form-control" placeholder="Address" id="floatingTipoDoc" style="height: 132px;"></textarea>
+                    <textarea class="form-control" placeholder="" id="floatingTipoDoc" style="height: 132px;" name="tipoDocumento" required></textarea>
                     <label for="floatingTipoDoc">Tipo de Documento</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Informe os tipos de documentos comprobatórios válidos.
                   </div>
                 </div>
 
                 <div class="col-md-6">
-                  <div class="form-floating">
-                    <input type="email" class="form-control" id="floatingLimiteHoras" placeholder="Limite de Horas por Atividade">
-                    <label for="floatingLimiteHoras">Limite de Horas por Atividade</label>
+                  <div class="form-floating mb-3">
+                    <select class="form-select" id="selectLimiteHoras" name="limiteHoras" required>
+                      <option value="" selected disabled>Selecione o limite de horas</option>
+                      <?php 
+                        for ($i=1; $i <= 40 ; $i++) { 
+                          echo "<option value=\"" . $i . "\">$i</option>";
+                        }
+                      ?>
+                    </select>
+                    <label for="selectLimiteHoras">Limite de horas por atividade</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Insira o Limite de Horas por atividade.
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="form-floating">
-                    <input type="number" class="form-control" id="floatingPassword" placeholder="Password">
-                    <label for="floatingPassword">Carga Horária Máxima</label>
+                  <div class="form-floating mb-3">
+                    <select class="form-select" id="selectCargaMax" name="cargaMax" required>
+                      <option value="" selected disabled>Selecione a carga horária máxima</option>
+                      <?php 
+                        for ($j=1; $j <= 40 ; $j++) { 
+                          echo "<option value=\"" . $j . "\">$j</option>";
+                        }
+                      ?>
+                    </select>
+                    <label for="selectCargaMax">Carga Horária Máxima</label>
+                  </div>
+                  <div class="invalid-feedback">
+                    Insira a Carga Horária Máxima.
                   </div>
                 </div>
-                
+                  <div class="col-md-12" id="selectCurso">
+                    <div class="form-floating mb-3">
+                      <select class="form-select" id="curso_0" name="curso_0" required>
+                        <option value="" selected disabled>Selecione o curso da atividade</option>
+                        <?php 
+                          require_once("../../conexao.php");
+                          $query = $pdo -> query("SELECT * FROM curso;");
+                          $query = $query -> fetchAll(PDO::FETCH_ASSOC);
+
+                          foreach ($query as $dados_curso) {
+                            echo "<option value='" . $dados_curso["cod_curso"] . "'>" . $dados_curso["nome_curso"] . "</option>";
+                          }
+                        ?>
+                      </select>
+                      <label for="selectCargaMax">Curso</label>
+                    </div>
+                    <div class="invalid-feedback">
+                      Informe o curso!
+                    </div>
+                  </div>
+
+                  <input type="hidden" id="contador" name="contador" value="1">
+
+                  <div id="botaoDuplicar" class="col-12 d-grid gap-2 mt-3">
+                    <!-- Coloque este botão onde você quiser que o clone dos selects seja inserido -->
+                    <button type="button" class="btn btn-outline-primary" onclick="duplicarSelects()">Selecionar outro curso</button>
+                  </div>
                 <div class="text-center">
-                  <button type="submit" class="btn btn-primary">Submit</button>
-                  <button type="reset" class="btn btn-secondary">Reset</button>
+                  <button type="submit" class="btn btn-primary">Salvar</button>
                 </div>
               </form><!-- End floating Labels Form -->
+
+              <script>
+                let contador = 1; // Inicialize o contador
+
+                function duplicarSelects() {
+                  // Obtenha a referência para as divs que você deseja duplicar
+                  const divCurso = document.getElementById('selectCurso');
+
+                  // Clone as divs usando a função cloneNode()
+                  const novaDivCurso = divCurso.cloneNode(true);
+
+                  // Crie novos IDs para as divs clonadas
+                  const novoCursoId = `selectCurso_${contador}`;
+
+                  // Defina os novos IDs nas divs clonadas
+                  novaDivCurso.setAttribute('id', novoCursoId);
+
+                  // Atualize os IDs e names dos selects dentro das divs clonadas
+                  const novoCursoSelect = novaDivCurso.querySelector('select');
+                  
+                  const novoCursoSelectId = `curso_${contador}`;
+                  const novoCursoSelectName = `curso_${contador}`;
+                  
+                  novoCursoSelect.setAttribute('id', novoCursoSelectId);
+                  novoCursoSelect.setAttribute('name', novoCursoSelectName);
+
+                  // Incrementar o contador para a próxima duplicação
+                  contador++;
+
+                  // Obtenha a referência ao botão que aciona a duplicação
+                  const botaoDuplicar = document.getElementById('botaoDuplicar');
+
+                  // Adicione as divs clonadas antes do botão de duplicação
+                  const form = document.getElementById('atividadesForm'); // Substitua 'seu-form-id' pelo ID do seu formulário
+                  form.insertBefore(novaDivCurso, botaoDuplicar);
+
+                  const contadorInput = document.getElementById('contador');
+                  contadorInput.value = contador;
+                }
+              </script>
+
+
+              <!-- ALERTAS -->
+              <?php 
+              if (isset($_SESSION['status_formulario'])) {
+                switch ($_SESSION['status_formulario']) {
+                  case true:
+                    echo '<div class="row justify-content-center">';
+                      echo '<div class="col-12 d-flex justify-content-center alerts-settings">';
+                        echo '<div class="alert alert-success alert-dismissible fade show " role="alert">';
+                          echo 'Atividade cadastrada com sucesso!';
+                          echo '<button type="button" class="btn-close" data-bs-dismiss="alert" echo aria-label="Close"></button>';
+                        echo '</div>';
+                      echo '</div>'; 
+                    echo '</div>';
+                    unset($_SESSION['status_formulario']);
+                    break;
+                  case false:
+                    echo '<div class="row justify-content-center">';
+                      echo '<div class="col-12 d-flex justify-content-center alerts-settings">';
+                        echo '<div class="alert alert-danger alert-dismissible fade show " role="alert">';
+                          echo 'Erro ao cadastrar atividade, contate o administrador!';
+                          echo '<button type="button" class="btn-close" data-bs-dismiss="alert" echo aria-label="Close"></button>';
+                        echo '</div>';
+                      echo '</div>'; 
+                    echo '</div>';
+                    unset($_SESSION['status_formulario']);
+                    break;
+                  default:
+                    unset($_SESSION['status_formulario']);
+                    break;
+                }
+              }
+              ?>
 
             </div>
           </div>

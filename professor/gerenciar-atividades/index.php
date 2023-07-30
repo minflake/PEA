@@ -474,13 +474,12 @@
           <table class="table datatable">
             <thead>
               <tr>
-                <th scope="col">Nome</th>
-                <th scope="col">Semestre</th>
-                <th scope="col">Turma</th>
-                <th scope="col">Disciplinas</th>
-                <th scope="col">Cadastrado em</th>
-                <th></i>Editar</th>
-
+                <th scope="col">Cód Atividade</th>
+                <th scope="col">Categoria</th>
+                <th scope="col">Tipo de Atividade</th>
+                <th scope="col">Arquivada?</th>
+                <th scope="col">Cadastrada em:</th>
+                <th scope="cpl"></i>Ações</th>
               </tr>
             </thead>
             <tbody>

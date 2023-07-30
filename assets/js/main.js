@@ -77,82 +77,23 @@ function validarCPF() {
   }
 }
 
-
-$( function() {
-  $( ".datepicker" ).datepicker({
-    altField: "#alt-datepicker",
-    dateFormat: 'dd/mm/yy'
-  });
-} );
-
-
-// Get all the input fields and labels
-const inputs = document.querySelectorAll('input');
-const labels = document.querySelectorAll('label');
-
-// Add event listeners to each input field
-inputs.forEach((input) => {
-  input.addEventListener('click', handleInputClick);
-  input.addEventListener('blur', handleInputBlur);
-});
-
-// Event handler for input field click
-function handleInputClick(event) {
-  const currentInput = event.target;
-
-  // Remove the 'active' class from all labels
-  labels.forEach((label) => {
-    label.classList.remove('active-datepicker');
-  });
-
-  // Get the label related to the current input field and add the 'active' class
-  const label1 = document.querySelector('label[for="InicioEntregas"]');
-  const label2 = document.querySelector('label[for="Entrega1"]');
-  const label3 = document.querySelector('label[for="EntregaFinal"]');
-  const label4 = document.querySelector('label[for="FimSemestre"]');
-  const label5 = document.querySelector('label[for="InicioSemestre"]');
-  
-  switch (currentInput) {
-    case InicioEntregas:
-      label2.classList.add('active-datepicker');
-      label3.classList.add('active-datepicker');
-      label4.classList.add('active-datepicker');
-      label5.classList.add('active-datepicker');
-      break;
-  
-    case Entrega1:
-      label3.classList.add('active-datepicker');
-      label4.classList.add('active-datepicker');
-      label4.classList.add('active-datepicker');
-      label5.classList.add('active-datepicker');
-      break;
-
-    case EntregaFinal:
-      label1.classList.add('active-datepicker');
-      label2.classList.add('active-datepicker');
-      break;
-
-    case FimSemestre:
-      label1.classList.add('active-datepicker');
-      label2.classList.add('active-datepicker');
-      label3.classList.add('active-datepicker');
-      break;
-
-    default:
-      label1.classList.add('active-datepicker');
-      label2.classList.add('active-datepicker');
-      label3.classList.add('active-datepicker');
-      label4.classList.add('active-datepicker');
-      break;
-  }
+function formatarTexto() {
+  const textArea = document.getElementById('floatingTipoAtividade');
+  const larguraCampo = textArea.clientWidth;
+  const textoSemQuebras = textArea.value.replace(/\n/g, '');
+  const textoFormatado = formatar(textoSemQuebras, larguraCampo);
+  textArea.value = textoFormatado;
 }
 
-// Event handler for input field blur
-function handleInputBlur() {
-  // Remove the 'active' class from all labels
-  labels.forEach((label) => {
-    label.classList.remove('active-datepicker');
-  });
+function formatar(texto, larguraCampo) {
+  const caracteresPorLinha = 40; // Define o número de caracteres por linha
+  let textoFormatado = '';
+
+  for (let i = 0; i < texto.length; i += caracteresPorLinha) {
+    textoFormatado += texto.substr(i, caracteresPorLinha) + '\n';
+  }
+
+  return textoFormatado;
 }
 
 
@@ -449,10 +390,40 @@ function handleInputBlur() {
   /**
    * Initiate Datatables
    */
-  const datatables = select('.datatable', true)
-  datatables.forEach(datatable => {
-    new simpleDatatables.DataTable(datatable);
-  })
+  const dataTableOptions = {
+    //scrollX: "2000px",
+    lengthMenu: [5, 10, 15, 20],
+    columnDefs: [
+        { className: "datatable-collumn-centered", targets: [6,7,8] },
+        { orderable: false, targets: [4, 8] },
+        { searchable: false, targets: [4, 5, 6, 7, 8] },
+        { width: "120px", targets: [8] },
+        { width: "65px", targets: [6, 7] }
+    ],
+    pageLength: 10,
+    destroy: true,
+    language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "Nenhum registro encontrado.",
+        info: "Mostrando de _START_ a _END_ de um total de _TOTAL_ registros.",
+        infoEmpty: "Nenhum registro encontrado.",
+        infoFiltered: "(filtrados desde _MAX_ registros totais)",
+        search: "Pesquisar:",
+        loadingRecords: "Carregando...",
+        paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Próximo",
+            previous: "Anterior"
+        }
+    }
+};
+
+$(document).ready( function () {
+  $('#exemple').DataTable(dataTableOptions);
+} );
+
+
 
   /**
    * Autoresize echart charts
@@ -467,5 +438,7 @@ function handleInputBlur() {
       }).observe(mainContainer);
     }, 200);
   }
+
+  
 
 })();
