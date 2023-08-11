@@ -7,92 +7,99 @@ if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
 }
 //CONSULTAR NO BANCO DE DADOS EM QUAIS DISCIPLINAS O ALUNO ESTÁ MATRICULADO
 require_once("../../conexao.php");
-$query = $pdo->query("SELECT * FROM disc_matriculada WHERE cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "'" . "AND status_matricula != '0'");
-$query = $query->fetchAll(PDO::FETCH_ASSOC);
+$query = $pdo->query("SELECT *, disciplina.nome_disc FROM disc_matriculada
+LEFT JOIN disciplina ON disc_matriculada.cod_disc = disciplina.cod_disc
+WHERE cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "'" . "AND status_matricula != '0';");
+$res_disc_matriculada = $query->fetchAll(PDO::FETCH_ASSOC);
+
+if (!empty($res_disc_matriculada)) {
 
 
-//COSULTAR NO BANCO O CONCEITO DE CADA DISCIPLINA
-$res_query_pega_conceito = array();
-$disc_matriculada = array();
-foreach ($query as $key => $disc_matriculadas) {
-    if (isset($disc_matriculadas["cod_conceito"])) {
-        $query_pega_conceito = $pdo->query("SELECT conceito FROM conceito WHERE cod_conceito = '" . $disc_matriculadas["cod_conceito"] . "';");
-        $res_query_pega_conceito[$key] = $query_pega_conceito->fetchAll(PDO::FETCH_ASSOC);
+    //COSULTAR NO BANCO O CONCEITO DE CADA DISCIPLINA
+    $res_query_pega_conceito = array();
+    $disc_matriculada = array();
+    foreach ($res_disc_matriculada as $key => $disc_matriculadas) {
+        if (isset($disc_matriculadas["cod_conceito"])) {
+            $query_pega_conceito = $pdo->query("SELECT conceito FROM conceito WHERE cod_conceito = '" . $disc_matriculadas["cod_conceito"] . "';");
+            $res_query_pega_conceito[$key] = $query_pega_conceito->fetchAll(PDO::FETCH_ASSOC);
 
-        //TESTA OS CONCEITOS PARA DETERMINAR SE O ALUNO ESTÁ APROVADO OU NAO NAS DISCIPLINAS
-        if ($res_query_pega_conceito[$key]["conceito"] == 0) {
+            //TESTA OS CONCEITOS PARA DETERMINAR SE O ALUNO ESTÁ APROVADO OU NAO NAS DISCIPLINAS
+            if ($res_query_pega_conceito[$key]["conceito"] == 0) {
 
-            //RETORNA QUE O ALUNO TEM CONCEITO "NÃO APROVADO" E DEVE CURSAR A DISCIPLINA CONSULTADA NO BANCO
+                //RETORNA QUE O ALUNO TEM CONCEITO "NÃO APROVADO" E DEVE CURSAR A DISCIPLINA CONSULTADA NO BANCO
+                $status_matricula = true;
+                $query_pega_disciplina = $pdo->query("SELECT * FROM disciplina WHERE cod_disc = '" . $disc_matriculadas["cod_disc"] . "';");
+                $disc_matriculada[] = $query_pega_disciplina->fetchAll(PDO::FETCH_ASSOC);
+                $_SESSION["dados_usuario"][0]["disc_matriculada"] = $disc_matriculada;
+            } else {
+
+                //RETORNA QUE O ALUNO TEM CONCEITO "APROVADO" E NÃO DEVE CURSAR AS DISCIPLINAS
+                $status_matricula = false;
+                $_SESSION["dados_usuario"][0]["disc_matriculada"] = null;
+            }
+        } else {
+            //RETORNA QUE O ALUNO NÃO TEM UM CONCEITO PORQUE NUNCA CURSOU A DISCIPLINA, DEVENDO ENTÃO CURSA-LA
             $status_matricula = true;
             $query_pega_disciplina = $pdo->query("SELECT * FROM disciplina WHERE cod_disc = '" . $disc_matriculadas["cod_disc"] . "';");
             $disc_matriculada[] = $query_pega_disciplina->fetchAll(PDO::FETCH_ASSOC);
-            $_SESSION["dados_usuario"][0]["disc_matriculada"] = $disc_matriculada;
-        } else {
-
-            //RETORNA QUE O ALUNO TEM CONCEITO "APROVADO" E NÃO DEVE CURSAR AS DISCIPLINAS
-            $status_matricula = false;
-            $_SESSION["dados_usuario"][0]["disc_matriculada"] = null;
         }
-    } else {
-        //RETORNA QUE O ALUNO NÃO TEM UM CONCEITO PORQUE NUNCA CURSOU A DISCIPLINA, DEVENDO ENTÃO CURSA-LA
-        $status_matricula = true;
-        $query_pega_disciplina = $pdo->query("SELECT * FROM disciplina WHERE cod_disc = '" . $disc_matriculadas["cod_disc"] . "';");
-        $disc_matriculada[] = $query_pega_disciplina->fetchAll(PDO::FETCH_ASSOC);
     }
-}
 
 
-$qntd_horas = array();
-$horas_contabilizadas = array();
-$horas_enviadas = array();
-$horas_pendentes = array();
-$horas_nao_enviadas = array();
-$dados_atvd_feita = array();
-$aux = array();
+    $qntd_horas = array();
+    $horas_contabilizadas = array();
+    $horas_enviadas = array();
+    $horas_pendentes = array();
+    $horas_nao_enviadas = array();
+    $dados_atvd_feita = array();
+    $aux = array();
 
-foreach ($disc_matriculada as $key => $value) {
-    $query = $pdo->query("SELECT 	atvd_feita.cod_disc, atvd_feita.qntd_horas, atvd_feita.horas_validas, atvd_feita.status_envio, atvd_por_curso.carga_horaria_max, atvd_por_curso.limite_horas_atvd, disciplina.nome_disc FROM atvd_feita
+    foreach ($disc_matriculada as $key => $value) {
+        $query = $pdo->query("SELECT 	atvd_feita.cod_disc, atvd_feita.qntd_horas, atvd_feita.horas_validas, atvd_feita.status_envio, atvd_por_curso.carga_horaria_max, atvd_por_curso.limite_horas_atvd, disciplina.nome_disc FROM atvd_feita
 
             LEFT JOIN atvd_por_curso ON atvd_feita.cod_atvd = atvd_por_curso.cod_atvd
             LEFT JOIN disciplina ON atvd_feita.cod_disc = disciplina.cod_disc
             WHERE atvd_feita.cod_disc = '" . $value[0]["cod_disc"] . "' AND cod_aluno ='" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "' AND atvd_por_curso.cod_curso = '" . $_SESSION["dados_usuario"][0]["cod_curso"] . "';");
-    $atvd_feita_horas = $query->fetchAll(PDO::FETCH_ASSOC);
-    $aux[] = $atvd_feita_horas;
-    $linhas_atvd_feita_horas = count($atvd_feita_horas);
+        $atvd_feita_horas = $query->fetchAll(PDO::FETCH_ASSOC);
+        $aux[] = $atvd_feita_horas;
+        $linhas_atvd_feita_horas = count($atvd_feita_horas);
 
-    $qntd_horas_total[$key]["nome_disc"] = $value[0]["nome_disc"];
-    $qntd_horas_total[$key]["qntd_horas"] = 0;
-    $horas_validas[$key]["nome_disc"] = $value[0]["nome_disc"];
-    $horas_validas[$key]["qntd_horas"] = 0;
-    $horas_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
-    $horas_enviadas[$key]["qntd_horas"] = 0;
-    $horas_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
-    $horas_pendentes[$key]["qntd_horas"] = 40;
-    $horas_nao_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
-    $horas_nao_enviadas[$key]["qntd_horas"] = 0;
+        $qntd_horas_total[$key]["nome_disc"] = $value[0]["nome_disc"];
+        $qntd_horas_total[$key]["qntd_horas"] = 0;
+        $horas_validas[$key]["nome_disc"] = $value[0]["nome_disc"];
+        $horas_validas[$key]["qntd_horas"] = 0;
+        $horas_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
+        $horas_enviadas[$key]["qntd_horas"] = 0;
+        $horas_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
+        $horas_pendentes[$key]["qntd_horas"] = 40;
+        $horas_nao_enviadas[$key]["nome_disc"] = $value[0]["nome_disc"];
+        $horas_nao_enviadas[$key]["qntd_horas"] = 0;
 
-    if (!empty($atvd_feita_horas)) {
+        if (!empty($atvd_feita_horas)) {
 
-        for ($i = 0; $i < $linhas_atvd_feita_horas; $i++) {
-            $qntd_horas_total[$key]["qntd_horas"] +=  $atvd_feita_horas[$i]["qntd_horas"];
-            $horas_validas[$key]["qntd_horas"] += $atvd_feita_horas[$i]["horas_validas"];
-      
-            if ($atvd_feita_horas[$i]["status_envio"] == 1) {
-              $horas_enviadas[$key]["qntd_horas"] += $atvd_feita_horas[$i]["qntd_horas"];
-              $horas_pendentes[$key]["qntd_horas"] -= $atvd_feita_horas[$i]["horas_validas"];
+            for ($i = 0; $i < $linhas_atvd_feita_horas; $i++) {
+                $qntd_horas_total[$key]["qntd_horas"] +=  $atvd_feita_horas[$i]["qntd_horas"];
+                $horas_validas[$key]["qntd_horas"] += $atvd_feita_horas[$i]["horas_validas"];
+
+                if ($atvd_feita_horas[$i]["status_envio"] == 1) {
+                    $horas_enviadas[$key]["qntd_horas"] += $atvd_feita_horas[$i]["qntd_horas"];
+                    $horas_pendentes[$key]["qntd_horas"] -= $atvd_feita_horas[$i]["horas_validas"];
+                }
             }
-          }
 
-        
-        $horas_nao_enviadas[$key]["qntd_horas"] = $qntd_horas_total[$key]["qntd_horas"] - $horas_enviadas[$key]["qntd_horas"];
-    } else {
 
-        $qntd_horas_total[$key]["qntd_horas"] = null;
-        $horas_validas[$key]["qntd_horas"] = null;
-        $horas_enviadas[$key]["qntd_horas"] = null;
-        $horas_pendentes[$key]["qntd_horas"] = null;
-        $horas_nao_enviadas[$key]["qntd_horas"] = null;
+            $horas_nao_enviadas[$key]["qntd_horas"] = $qntd_horas_total[$key]["qntd_horas"] - $horas_enviadas[$key]["qntd_horas"];
+        } else {
+
+            $qntd_horas_total[$key]["qntd_horas"] = null;
+            $horas_validas[$key]["qntd_horas"] = null;
+            $horas_enviadas[$key]["qntd_horas"] = null;
+            $horas_pendentes[$key]["qntd_horas"] = null;
+            $horas_nao_enviadas[$key]["qntd_horas"] = null;
+        }
     }
+} else {
+    $status_matricula = false;
 }
 
 ?>
@@ -127,12 +134,8 @@ foreach ($disc_matriculada as $key => $value) {
     <!-- Template Main CSS File -->
     <link href="../../assets/css/style.css" rel="stylesheet">
 
-    <!-- DataTable files -->
-
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+    <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
 
     <!-- =======================================================
   * Template Name: NiceAdmin
@@ -410,276 +413,137 @@ foreach ($disc_matriculada as $key => $value) {
             </nav>
         </div><!-- End Page Title -->
 
-        <section>
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div id="apexChart"></div>
-                            <script>
-                                document.addEventListener("DOMContentLoaded", () => {
-                                    var options = {
-                                        colors: ['#0d6efd', '#dc3545', '#ffc107', '#198754', '#0dcaf0'],
-                                        series: [{
-                                            name: 'Registradas',
-                                            data: [
-                                                <?php echo $qntd_horas_total[0]["qntd_horas"]; ?>,
-                                                <?php echo $qntd_horas_total[1]["qntd_horas"]; ?>
-                                            ]
-                                        }, {
-                                            name: 'Não Enviadas',
-                                            data: [
-                                                <?php echo $horas_nao_enviadas[0]["qntd_horas"]; ?>,
-                                                <?php echo $horas_nao_enviadas[1]["qntd_horas"]; ?>
-                                            ]
-                                        }, {
-                                            name: 'Válidas',
-                                            data: [
-                                                <?php echo $horas_validas[0]["qntd_horas"]; ?>,
-                                                <?php echo $horas_validas[1]["qntd_horas"]; ?>
-                                            ]
-                                        }, {
-                                            name: 'Enviadas',
-                                            data: [
-                                                <?php echo $horas_enviadas[0]["qntd_horas"]; ?>,
-                                                <?php echo $horas_enviadas[1]["qntd_horas"]; ?>
-                                            ]
-                                        }, {
-                                            name: 'Pendentes',
-                                            data: [
-                                                <?php echo $horas_pendentes[0]["qntd_horas"]; ?>,
-                                                <?php echo $horas_pendentes[1]["qntd_horas"]; ?>
-                                            ]
-                                        }],
-                                        chart: {
-                                            type: 'bar',
-                                            height: 160,
-                                            stacked: true,
-                                            stackType: '100%'
-                                        },
-                                        plotOptions: {
-                                            bar: {
-                                                horizontal: true,
-                                            },
-                                        },
-                                        stroke: {
-                                            width: 0,
-                                            colors: ['#fff']
-                                        },
-                                        title: {
-                                            text: 'Atividades Enviadas'
-                                        },
-                                        xaxis: {
-                                            categories: [
-                                                <?php
-                                                if (!empty($aux[0])) {
-                                                    echo "'TAA001'";
-                                                }
-                                                ?>,
-                                                <?php
-                                                if (!empty($aux[1])) {
-                                                    echo "'TAA002'";
-                                                }
-                                                ?>
-                                            ],
-                                        },
-                                        tooltip: {
-                                            y: {
-                                                formatter: function(val) {
-                                                    return val + " Horas"
-                                                }
-                                            }
-                                        },
-                                        fill: {
-                                            opacity: 1
+        <?php
+        if ($status_matricula === true) {
+        ?>
+            <section>
+                <?php
+                if (!empty($aux[0])) {
+                ?>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
 
-                                        },
-                                        legend: {
-                                            position: 'top',
-                                            horizontalAlign: 'left',
-                                            offsetX: 40
-                                        }
-                                    };
+                                    <div id="apexChart"></div>
 
-                                    var chart = new ApexCharts(document.querySelector("#apexChart"), options);
-                                    chart.render();
-                                });
-                            </script>
+                                </div>
+
+
+                            </div>
                         </div>
-
                     </div>
-                </div>
-            </div>
 
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Envie as atividades de acordo com a disciplina.</h5>
 
-                            <!-- Table with stripped rows -->
-                            <table id="exemple" class="table datatable">
-                                <thead>
-                                    <tr>
-                                    <tr>
-                                        <th class="datatable-collumn" scope="col">#</th>
-                                        <th class="datatable-collumn" scope="col">Disciplina</th>
-                                        <th class="datatable-collumn" scope="col">Tipo Atvd</th>
-                                        <th class="datatable-collumn" scope="col">Horas Válidas</th>
-                                        <th class="datatable-collumn" scope="col">Ações</th>
-                                    </tr>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    foreach ($dados_atvd_feita as $atvd_feita) {
-                                    ?>
-                                        <tr>
-                                            <th scope='row'>
-                                                <?php echo $atvd_feita["cod_atvd_feita"]; ?>
-                                            </th>
-                                            <td>
-                                                <?php echo $atvd_feita["nome_disc"]; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $atvd_feita["tipo_atvd"]; ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                $formato_entrada = 'Y-m-d';
-                                                $data_criacao = DateTime::createFromFormat($formato_entrada, $atvd_feita['data_criacao']);
-                                                $data_criacao = $data_criacao->format('d/m/Y');
-                                                echo $data_criacao;
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $atvd_feita["qntd_horas"] . " horas"; ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                if ($atvd_feita["status_envio"] == 0) {
-                                                    echo "<span class='badge bg-warning text-dark'>Não enviada</span>";
-                                                } else {
-                                                    echo "<span class='badge bg-success'>Enviada</span>";
-                                                }
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                if (isset($atvd_feita["cod_feedback"])) {
-                                                    echo "<span class='badge bg-success'>Recebido</span>";
-                                                } else {
-                                                    echo "<span class='badge bg-warning text-dark'>Não recebido</span>";
-                                                }
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <div class="row">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Envie as atividades de acordo com a disciplina.</h5>
+
+                                    <!-- Floating Labels Form -->
+                                    <form class="row g-3">
+                                        <div class="col-12">
+                                            <div class="form-floating mb-4">
+                                                <select class="form-select" id="disciplina" name="disciplina" required>
+                                                    <option value="" disabled selected>Selecione uma Disciplina para enviar as atividades feitas</option>
                                                     <?php
-                                                    if (!isset($atvd_feita["cod_feedback"]) && $atvd_feita["status_envio"] == 0) {
+                                                    foreach ($res_disc_matriculada as $key => $value) {
                                                     ?>
-                                                        <div class="div-datatable-collumn">
-                                                            <button class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    } else {
-                                                    ?>
-                                                        <div class="div-datatable-collumn" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Aguarde o feedback para poder editar!">
-                                                            <button class="btn btn-sm btn-outline-primary" disabled>
-                                                                <i class="bi bi-pencil-fill"></i>
-                                                            </button>
-                                                        </div>
+                                                        <option value="<?php echo $value["cod_disc"]; ?>">
+                                                            <?php echo $value["nome_disc"]; ?>
+                                                        </option>
                                                     <?php
                                                     }
                                                     ?>
-                                                    <div class="div-datatable-collumn">
-                                                        <button class="btn btn-sm btn-outline-secondary">
-                                                            <i class="bi bi-eye-fill"></i>
-                                                        </button>
-                                                    </div>
-                                                    <?php
-                                                    if ($atvd_feita["status_envio"] == 0) {
-                                                    ?>
-                                                        <div class="div-datatable-collumn">
-                                                            <button class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    } else {
-                                                    ?>
-                                                        <div class="div-datatable-collumn" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Atividade já enviada, não é possível excluir!">
-                                                            <button class="btn btn-sm btn-outline-danger" disabled>
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    }
-                                                    ?>
+                                                </select>
+                                                <label for="disciplina">Disciplina</label>
+                                                <div class="invalid-feedback">
+                                                    Informe a Disciplina.
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    <?php
-                                    }
-                                    ?>
-                                </tbody>
-                            </table>
-                            <!-- End Table with stripped rows -->
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <!-- Table with stripped rows -->
+                                    <form action="processa-enviar-atividades.php" method="get">
+                                        <table id="tabelaEnviarAtvd" class="table datatable">
+                                            <thead>
+                                                <tr>
+                                                <tr>
+                                                    <th class="datatable-collumn" scope="col">#</th>
+                                                    <th class="datatable-collumn" scope="col">Disciplina</th>
+                                                    <th class="datatable-collumn" scope="col">Tipo Atvd</th>
+                                                    <th class="datatable-collumn" scope="col">Qntd. Horas</th>
+                                                    <th class="datatable-collumn" scope="col">Horas Válidas</th>
+                                                    <th class="datatable-collumn" scope="col">Ações</th>
+                                                </tr>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td colspan="6" align="center">Selecione uma disciplina.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="text-center">
+                                            <button type="submit" class="btn btn-primary">Enviar</button>
+                                        </div>
+                                    </form>
+                                    <!-- End Table with stripped rows -->
+
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Somas atividades</h5>
-
-
+                <?php
+                } else {
+                ?>
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body d-flex justify-content-center align-items-center" style="height: 340px;">
+                                    <h5 class="card-title" style="text-align: center;">Nenhuma Atividade Registrada. Por favor, registre uma atividade!</h5>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-        </section>
-
-        <script>
-            // Quando o valor do select for alterado
-            document.getElementById('tipoAtvd').addEventListener('change', function() {
-                var opcaoSelecionada = this.value;
-
-                // Crie a requisição para o arquivo PHP
-                var xhttp = new XMLHttpRequest();
-                xhttp.onreadystatechange = function() {
-                    if (this.readyState == 4 && this.status == 200) {
-                        // Receba os dados JSON da resposta
-                        var data = JSON.parse(this.responseText);
-                        console.log(data); // Verifique o conteúdo do JSON no console do navegador
-
-                        // Limpe a tabela antes de preenchê-la novamente
-                        var tableBody = document.getElementById('tabelaDadosAtvdFazer').getElementsByTagName('tbody')[0];
-                        tableBody.innerHTML = '';
-
-                        // Obtenha as chaves do primeiro objeto do JSON 
-                        var keys = Object.keys(data[0]);
-
-                        // Itere sobre as chaves e preencha a tabela
-                        for (var i = 0; i < keys.length; i++) {
-                            var row = tableBody.insertRow();
-                            var cell1 = row.insertCell(0);
-                            var cell2 = row.insertCell(1);
-                            cell1.innerHTML = keys[i];
-                            cell2.innerHTML = data[0][keys[i]];
-                        }
-
+                <?php
+                }
+                ?>
+                <!-- ALERTAS -->
+                <?php
+                if (isset($_SESSION['status_formulario'])) {
+                    if ($_SESSION['status_formulario'] == false) {
+                        echo '<div class="row justify-content-center">';
+                        echo '<div class="col-12 d-flex justify-content-center alerts-settings">';
+                        echo '<div class="alert alert-danger alert-dismissible fade show " role="alert">';
+                        echo 'Erro ao enviar atividades, contate o administrador!';
+                        echo '<button type="button" class="btn-close" data-bs-dismiss="alert" echo aria-label="Close"></button>';
+                        echo '</div>';
+                        echo '</div>';
+                        echo '</div>';
+                        unset($_SESSION['status_formulario']);
                     }
-                };
-
-                // Envie a requisição para o arquivo PHP com a opção selecionada como parâmetro
-                xhttp.open('GET', 'consulta-atividades.php?opcao=' + opcaoSelecionada, true);
-                xhttp.send();
-            });
-        </script>
+                }
+                ?>
+            </section>
+        <?php
+        } else {
+        ?>
+            <section>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body d-flex justify-content-center align-items-center" style="height: 340px;">
+                                <h5 class="card-title">AACC's já apovadas OU matricula nao realizada.</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        <?php
+        }
+        ?>
     </main><!-- End #main -->
 
     <!-- ======= Footer ======= -->
@@ -708,6 +572,202 @@ foreach ($disc_matriculada as $key => $value) {
     <script src="../../assets/vendor/tinymce/tinymce.min.js"></script>
     <script src="../../assets/vendor/php-email-form/validate.js"></script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            var options = {
+                colors: ['#0d6efd', '#dc3545', '#ffc107', '#198754', '#0dcaf0'],
+                series: [{
+                    name: 'Registradas',
+                    data: [
+                        <?php
+                        if (!empty($aux[0]) && isset($aux[0]) && !empty($aux[1]) && isset($aux[1])) {
+                            echo $qntd_horas_total[0]["qntd_horas"];
+                            echo ",";
+                            echo $qntd_horas_total[1]["qntd_horas"];
+                        } elseif (!empty($aux[0]) && isset($aux[0])) {
+                            echo $qntd_horas_total[0]["qntd_horas"];
+                        } else {
+                            echo $qntd_horas_total[1]["qntd_horas"];
+                        }
+                        ?>
+                    ]
+                }, {
+                    name: 'Não Enviadas',
+                    data: [
+                        <?php
+                        if (!empty($aux[0]) && isset($aux[0]) && !empty($aux[1]) && isset($aux[1])) {
+                            echo $horas_nao_enviadas[0]["qntd_horas"];
+                            echo ",";
+                            echo $horas_nao_enviadas[1]["qntd_horas"];
+                        } elseif (!empty($aux[0]) && isset($aux[0])) {
+                            echo $horas_nao_enviadas[0]["qntd_horas"];
+                        } else {
+                            echo $horas_nao_enviadas[1]["qntd_horas"];
+                        }
+                        ?>
+                    ]
+                }, {
+                    name: 'Válidas',
+                    data: [
+                        <?php
+                        if (!empty($aux[0]) && isset($aux[0]) && !empty($aux[1]) && isset($aux[1])) {
+                            echo $horas_validas[0]["qntd_horas"];
+                            echo ",";
+                            echo $horas_validas[1]["qntd_horas"];
+                        } elseif (!empty($aux[0]) && isset($aux[0])) {
+                            echo $horas_validas[0]["qntd_horas"];
+                        } else {
+                            echo $horas_validas[1]["qntd_horas"];
+                        }
+                        ?>
+                    ]
+                }, {
+                    name: 'Enviadas',
+                    data: [
+                        <?php
+                        if (!empty($aux[0]) && isset($aux[0]) && !empty($aux[1]) && isset($aux[1])) {
+                            echo $horas_enviadas[0]["qntd_horas"];
+                            echo ",";
+                            echo $horas_enviadas[1]["qntd_horas"];
+                        } elseif (!empty($aux[0]) && isset($aux[0])) {
+                            echo $horas_enviadas[0]["qntd_horas"];
+                        } else {
+                            echo $horas_enviadas[1]["qntd_horas"];
+                        }
+                        ?>
+                    ]
+                }, {
+                    name: 'Pendentes',
+                    data: [
+                        <?php
+                        if (!empty($aux[0]) && isset($aux[0]) && !empty($aux[1]) && isset($aux[1])) {
+                            echo $horas_pendentes[0]["qntd_horas"];
+                            echo ",";
+                            echo $horas_pendentes[1]["qntd_horas"];
+                        } elseif (!empty($aux[0]) && isset($aux[0])) {
+                            echo $horas_pendentes[0]["qntd_horas"];
+                        } else {
+                            echo $horas_pendentes[1]["qntd_horas"];
+                        }
+                        ?>
+                    ]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 160,
+                    stacked: true,
+                    stackType: '100%'
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: true,
+                    },
+                },
+                stroke: {
+                    width: 0,
+                    colors: ['#fff']
+                },
+                title: {
+                    text: 'Atividades Enviadas'
+                },
+                xaxis: {
+                    categories: [
+                        <?php
+                        if (!empty($aux[0] && isset($aux[0]))) {
+                            echo "'TAA001'";
+                        }
+                        ?>,
+                        <?php
+                        if (!empty($aux[1]) && isset($aux[1])) {
+                            echo "'TAA002'";
+                        }
+                        ?>
+                    ],
+                },
+                tooltip: {
+                    y: {
+                        formatter: function(val) {
+                            return val + " Horas"
+                        }
+                    }
+                },
+                fill: {
+                    opacity: 1
+
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    offsetX: 40
+                }
+            };
+
+            var chart = new ApexCharts(document.querySelector("#apexChart"), options);
+            chart.render();
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Captura o evento de envio do formulário
+            $('#disciplina').change(function() {
+
+                // Obtém o valor da opção selecionada
+                var valorSelecionado = $(this).val();
+
+                // Faz uma solicitação AJAX usando a função $.ajax do jQuery
+                $.ajax({
+                    type: 'GET', // Método de envio (pode ser 'GET' ou 'POST')
+                    url: 'enviar-atividades-consulta.php', // URL do script que processará os dados
+                    data: {
+                        opcao: valorSelecionado
+                    }, // Dados do formulário serializados
+                    success: function(response) {
+                        if (response.length < 1) {
+                            // Limpe a tabela antes de preenchê-la novamente
+                            var tableBody = document.getElementById('tabelaEnviarAtvd').getElementsByTagName('tbody')[0];
+
+                            tableBody.innerHTML = '';
+                            var colSpanValue = 6;
+                            var row = tableBody.insertRow();
+                            var cell1 = row.insertCell(0, 1, 2, 3, 4, 5);
+                            cell1.innerHTML = 'Nenhuma atividade para enviar. Por favor, registre uma atividade.';
+                            cell1.setAttribute("colspan", colSpanValue);
+                            cell1.style.textAlign = "center";
+
+                        } else {
+                            // Limpe a tabela antes de preenchê-la novamente
+                            var tableBody = document.getElementById('tabelaEnviarAtvd').getElementsByTagName('tbody')[0];
+                            tableBody.innerHTML = '';
+
+                            // Itere sobre as chaves e preencha a tabela
+                            for (var i = 0; i < response.length; i++) {
+                                var row = tableBody.insertRow();
+                                var cell1 = row.insertCell(0);
+                                var cell2 = row.insertCell(1);
+                                var cell3 = row.insertCell(2);
+                                var cell4 = row.insertCell(3);
+                                var cell5 = row.insertCell(4);
+                                var cell6 = row.insertCell(5);
+                                cell1.innerHTML = response[i]['cod_atvd_feita'];
+                                cell2.innerHTML = response[i]['nome_disc'];
+                                cell3.innerHTML = response[i]['tipo_atvd'];
+                                cell4.innerHTML = response[i]['qntd_horas'];
+                                cell5.innerHTML = response[i]['horas_validas'];
+                                cell6.innerHTML = '<input name = "atividade_' + i + '" type="checkbox" value="' + response[i]["cod_atvd_feita"] + '">';
+                            }
+                        }
+
+                    },
+                    error: function(xhr, status, error) {
+                        // Função a ser executada quando ocorrer um erro na solicitação
+                        console.error('Erro na solicitação:', error);
+                        console.log('Resposta do servidor:', response);
+                    }
+                });
+            });
+        });
+    </script>
     <!-- Template Main JS File -->
     <script src="../../assets/js/main.js"></script>
 

@@ -261,8 +261,8 @@
             </a>
           </li>
           <li>
-            <a href="gerenciar-alunos/cadastrar-alunos.php">
-              <i class="bi bi-circle"></i><span>Cadastrar Alunos</span>
+            <a href="visualizar-atividades/enviar-atividades.php">
+              <i class="bi bi-circle"></i><span>Enviar Atividades</span>
             </a>
           </li>
           <li>

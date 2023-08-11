@@ -1,11 +1,18 @@
-<?php 
-  session_start();
+<?php
+session_start();
+require_once("../../conexao.php");
+// Verificar se o usuário está logado
+if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
+  header("Location: ../index.php");
+  exit();
+}
 
-  // Verificar se o usuário está logado
-  if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
-    header("Location: ../index.php");
-    exit();
-  }
+$query = $pdo->query("SELECT * FROM curso");
+$cursos = $query->fetchAll(PDO::FETCH_ASSOC);
+
+$query = $pdo->query("SELECT * FROM disciplina");
+$disciplinas = $query->fetchAll(PDO::FETCH_ASSOC);
+
 
 ?>
 <!DOCTYPE html>
@@ -39,10 +46,30 @@
   <!-- Template Main CSS File -->
   <link href="../../assets/css/style.css" rel="stylesheet">
 
-  <!-- JS Liberies -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  <link rel="stylesheet" href="../../assets/jquery/jquery-ui.css">
+  <!-- DataTable files -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/rowreorder/1.4.1/js/dataTables.rowReorder.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
+  <style>
+    /* Media query for mobile devices */
+    @media (max-width: 768px) {
+
+      .table-responsive th, .table-responsive td {
+        display: block;
+        width: 100%;
+      }
+
+      .table-responsive th {
+        text-align: center;
+      }
+    }
+  </style>
 
   <!-- =======================================================
   * Template Name: NiceAdmin
@@ -60,19 +87,19 @@
 
     <div class="d-flex align-items-center justify-content-between">
       <a href="../index.php" class="logo d-flex align-items-center">
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="div-logo">
-          <img src="../../assets/img/6_250px/6.png" alt="">
-        </div>
-        <div class="d-none d-lg-block container-nome-ferramenta">
-          <div class="div-nome-ferramenta-1">
-            <span>PEA</span>
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="div-logo">
+            <img src="../../assets/img/6_250px/6.png" alt="">
           </div>
-          <div class="div-nome-ferramenta-2 align-items-bottom">
-            <span>Portal de Entrega de Atividades</span>
+          <div class="d-none d-lg-block container-nome-ferramenta">
+            <div class="div-nome-ferramenta-1">
+              <span>PEA</span>
+            </div>
+            <div class="div-nome-ferramenta-2 align-items-bottom">
+              <span>Portal de Entrega de Atividades</span>
+            </div>
           </div>
         </div>
-      </div>  
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
@@ -160,8 +187,8 @@
             <i class="bi bi-person-circle"></i>
             <span class="d-none d-md-block dropdown-toggle ps-2">
               <?php
-                @session_start();
-                echo $_SESSION["dados_usuario"][0]["nome"];
+              @session_start();
+              echo $_SESSION["dados_usuario"][0]["nome"];
               ?>
             </span>
           </a><!-- End Profile Iamge Icon -->
@@ -170,9 +197,9 @@
             <li class="dropdown-header">
               <h6>
                 <?php
-                  @session_start();
-                  echo $_SESSION["dados_usuario"][0]["nome"];
-                  echo " {$_SESSION["dados_usuario"][0]["sobrenome"]}";
+                @session_start();
+                echo $_SESSION["dados_usuario"][0]["nome"];
+                echo " {$_SESSION["dados_usuario"][0]["sobrenome"]}";
                 ?>
               </h6>
               <span>Professor</span>
@@ -335,7 +362,7 @@
 
       <li class="nav-item">
         <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
-          <i class="bx bxs-graduation"></i><span>Gerenciar Conceitos  </span><i class="bi bi-chevron-down ms-auto"></i>
+          <i class="bx bxs-graduation"></i><span>Gerenciar Conceitos </span><i class="bi bi-chevron-down ms-auto"></i>
         </a>
         <ul id="charts-nav" class="nav-content collapse" data-bs-parent="#sidebar-nav">
           <li>
@@ -379,131 +406,250 @@
 
   <main id="main" class="main">
     <div class="pagetitle">
-      <h1>Gerenciar Devolutivas	</h1>
+      <h1>Gerenciar Devolutivas </h1>
       <nav>
         <ol class="breadcrumb">
           <li class="breadcrumb-item"><a href="../index.php">Home</a></li>
           <li class="breadcrumb-item active">Gerenciar Devolutivas</li>
           <li class="breadcrumb-item active">Visualizar Relatórios</li>
-          
+
         </ol>
       </nav>
     </div><!-- End Page Title -->
 
 
     <section>
-      <div class="row gerenciar-alunos-nav justify-content-center">
-
-      <div class="col-4">
-          <div class="card info-card sales-card">
-            <a href="dar-feedback.php">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                    <i class="bi bi-file-earmark-richtext"></i>
-                  </div>
-                  <div>
-                    <h5 class="card-title">Dar Feedback</h5>
-                  </div>
-                </div>
-                    
-                <div class="card-text">
-                  <p>
-                    Registre uma devolutiva à uma atividade especifica.
-                  </p>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-
-        <div class="col-4">
-          <div class="card info-card sales-card">
-            <a href="#">
-              <div class="card-body">
-                <div class="d-flex align-items-center">
-                  <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                    <i class="bi bi-file-earmark-pdf"></i>
-                  </div>
-                  <div>
-                    <h5 class="card-title">Extrair Relatório</h5>
-                  </div>
-                </div>
-                    
-                <div class="card-text">
-                  <p>
-                    Extrair relatório de feedbacks dados às atividades.
-                  </p>
-                </div>
-              </div>
-            </a>
-          </div>
-        </div>
-
-      </div>
 
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">Datatables</h5>
-          <p>Add lightweight datatables to your project with using the <a href="https://github.com/fiduswriter/Simple-DataTables" target="_blank">Simple DataTables</a> library. Just add <code>.datatable</code> class name to any table you wish to conver to a datatable</p>
+          <h5 class="card-title">Relatórios Recebidos</h5>
 
-          <!-- Table with stripped rows -->
-          <table class="table datatable">
-            <thead>
-              <tr>
-                <th scope="col">Nome</th>
-                <th scope="col">Semestre</th>
-                <th scope="col">Turma</th>
-                <th scope="col">Disciplinas</th>
-                <th scope="col">Cadastrado em</th>
-                <th></i>Editar</th>
+          <!-- Vertically centered Modal -->
+          <div class="col-12 d-grid gap-2 mt-2 mb-4">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#basicModal">
+              Filtrar Relatórios
+            </button>
+          </div>
 
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">1</th>
-                <td>Brandon Jacob</td>
-                <td>Designer</td>
-                <td>28</td>
-                <td>2016-05-25</td>
-                <td><i class="bi bi-book"></td>
-              </tr>
-              <tr>
-                <th scope="row">2</th>
-                <td>Bridie Kessler</td>
-                <td>Developer</td>
-                <td>35</td>
-                <td>2014-12-05</td>
-              </tr>
-              <tr>
-                <th scope="row">3</th>
-                <td>Ashleigh Langosh</td>
-                <td>Finance</td>
-                <td>45</td>
-                <td>2011-08-12</td>
-              </tr>
-              <tr>
-                <th scope="row">4</th>
-                <td>Angus Grady</td>
-                <td>HR</td>
-                <td>34</td>
-                <td>2012-06-11</td>
-              </tr>
-              <tr>
-                <th scope="row">5</th>
-                <td>Raheem Lehner</td>
-                <td>Dynamic Division Officer</td>
-                <td>47</td>
-                <td>2011-04-19</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="modal fade" id="basicModal" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form action="processa-index.php" method="get">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Selecionar Filtros</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+
+                    <div class="col-md-12">
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="selectCurso" name="curso">
+                          <option value="" selected disabled>Selecione o curso</option>
+                          <?php
+                          foreach ($cursos as $key => $value) {
+                          ?>
+                            <option value="<?php echo $value["cod_curso"]; ?>"><?php echo $value["nome_curso"]; ?></option>
+                          <?php
+                          }
+                          ?>
+                        </select>
+                        <label for="selectCurso">Curso</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="selectDisciplina" name="disciplina">
+                          <option value="" selected disabled>Selecione a Disciplina</option>
+                          <?php
+                          foreach ($disciplinas as $key => $value) {
+                          ?>
+                            <option value="<?php echo $value["cod_disc"]; ?>"><?php echo $value["nome_disc"]; ?></option>
+                          <?php
+                          }
+                          ?>
+                        </select>
+                        <label for="selectDisciplina">Disciplina</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="selectSemestre" name="semestre">
+                          <option value="" selected disabled>Selecione o semestre</option>
+                          <?php
+                          for ($i = 1; $i <= 10; $i++) {
+                            echo "<option value=\"" . $i . "\">" . $i . "º Semestre</option>";
+                          }
+                          ?>
+                        </select>
+                        <label for="selectSemestre">Semestre</label>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-floating mb-3">
+                        <select class="form-select" id="selectStatus" name="status">
+                          <option value="" selected disabled>Selecione o Status</option>
+                          <option value="1">Deferido</option>
+                          <option value="0">Indeferido</option>
+                        </select>
+                        <label for="selectStatus">Status</label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          <!-- End Vertically centered Modal-->
+
+          <?php
+          if (isset($_SESSION["relatorios"]) && !empty($_SESSION["relatorios"])) {
+          ?>
+            <!-- Table with stripped rows -->
+            <table class="table display nowrap"  style="width:100%" id="tabelaGerenciarRelatorios">
+              <thead>
+                <tr>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Curso</th>
+                  <th scope="col">Disciplina</th>
+                  <th scope="col">RA</th>
+                  <th scope="col">Aluno</th>
+                  <th scope="col">Horas</th>
+                  <th scope="col">Data</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Ações</th>
+                </tr>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                foreach ($_SESSION["relatorios"] as $key => $relatorio) {
+                ?>
+                  <tr>
+                    <th scope="row"><?php echo $relatorio["cod_relatorio"]; ?></th>
+                    <td><?php echo $relatorio["nome_curso"]; ?></td>
+                    <td><?php echo $relatorio["nome_disc"]; ?></td>
+                    <td><?php echo $relatorio["ra"]; ?></td>
+                    <td><?php echo $relatorio["nome"] . " " . $relatorio["sobrenome"]; ?></td>
+                    <td>
+                      <?php
+                      if ($relatorio["horas_enviadas"] == 1) {
+                        echo $relatorio["horas_enviadas"] . " hora";
+                      } else {
+                        echo $relatorio["horas_enviadas"] . " horas";
+                      }
+                      ?>
+                    </td>
+                    <td>
+                      <?php
+                      $formato_entrada = 'Y-m-d H:i:s';
+                      $data_envio = DateTime::createFromFormat($formato_entrada, $relatorio["data_envio"]);
+                      $data_envio = $data_envio->format('d/m/Y');
+                      echo $data_envio;
+                      ?>
+                    </td>
+                    <td>
+                      <?php
+                      if (isset($relatorio["conceito"])) {
+                        if ($relatorio["conceito"] == 1) {
+                          echo '<span class="badge bg-success">Deferido</span>';
+                        } else {
+                          echo '<span class="badge bg-danger">Indeferido</span>';
+                        }
+                      } else {
+                        echo '<span class="badge bg-warning text-dark">Recebido</span>';
+                      }
+                      ?>
+                    </td>
+                    <td>
+                      <form action="dar-feedback.php" method="get">
+                        <input name="cod_relatorio" type="number" value="<?php echo $relatorio["cod_relatorio"]; ?>" hidden>
+                        <button type="submit" class="btn btn-sm btn-outline-secondary">
+                          <i class="bi bi-eye-fill"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <?php
+                }
+                ?>
+              </tbody>
+            </table>
+          <?php
+          } elseif (isset($_SESSION["relatorios"]) && empty($_SESSION["relatorios"])) {
+          ?>
+            <table class="table table-responsive">
+              <thead>
+                <tr>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Curso</th>
+                  <th scope="col">Disciplina</th>
+                  <th scope="col">RA</th>
+                  <th scope="col">Aluno</th>
+                  <th scope="col">Horas</th>
+                  <th scope="col">Data</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Ações</th>
+                </tr>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="9" align="center">Nenhum resultado encontrado.</td>
+                </tr>
+              </tbody>
+            </table>
+          <?php
+          } else {
+            # code...
+          ?>
+            <table class="table table-responsive">
+              <thead>
+                <tr>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Curso</th>
+                  <th scope="col">Disciplina</th>
+                  <th scope="col">RA</th>
+                  <th scope="col">Aluno</th>
+                  <th scope="col">Horas</th>
+                  <th scope="col">Data</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Ações</th>
+                </tr>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="9" align="center">Selecione um filtro.</td>
+                </tr>
+              </tbody>
+            </table>
+
+          <?php
+          }
+          ?>
           <!-- End Table with stripped rows -->
+
+          <form action="processa-index.php" method="get" class="d-flex justify-content-center">
+            <input type="number" value="1" hidden>
+            <div class="col-2 d-grid gap-2 mt-3 mb-4">
+              <!-- Coloque este botão onde você quiser que o clone dos selects seja inserido -->
+              <button type="submit" class="btn btn-outline-secondary">
+                Limpar Filtros
+              </button>
+            </div>
+          </form>
+
 
         </div>
       </div>
-    
+
     </section>
 
   </main><!-- End #main -->
@@ -524,6 +670,57 @@
 
   <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
+
+  <!-- Scripts -->
+  <script>
+    /**
+     * Initiate Datatables
+     */
+    const tabelaGerenciarRelatorios = {
+      //scrollX: "2000px",
+      responsive: true,
+      rowReorder: {
+        selector: 'td:nth-child(2)'
+      },
+      lengthMenu: [5, 10, 15, 20],
+      columnDefs: [{
+          className: "datatable-collumn-centered",
+          targets: [8]
+        },
+        {
+          orderable: false,
+          targets: [3, 5, 8]
+        },
+        {
+          searchable: false,
+          targets: [5, 6, 7, 8]
+        },
+      ],
+      pageLength: 10,
+      destroy: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "Nenhum registro encontrado.",
+        info: "Mostrando de _START_ a _END_ de um total de _TOTAL_ registros.",
+        infoEmpty: "Nenhum registro encontrado.",
+        infoFiltered: "(filtrados desde _MAX_ registros totais)",
+        search: "Pesquisar:",
+        loadingRecords: "Carregando...",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "Próximo",
+          previous: "Anterior"
+        }
+      }
+    };
+
+    $(document).ready(function() {
+      $('#tabelaGerenciarRelatorios').DataTable(tabelaGerenciarRelatorios);
+    });
+  </script>
+
+
   <!-- Vendor JS Files -->
   <script src="../../assets/vendor/apexcharts/apexcharts.min.js"></script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -536,8 +733,6 @@
 
   <!-- Template Main JS File -->
   <script src="../../assets/js/main.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 </body>
 

@@ -385,45 +385,7 @@ function formatar(texto, larguraCampo) {
         }
         form.classList.add('was-validated')
       }, false)
-    })
-
-  /**
-   * Initiate Datatables
-   */
-  const dataTableOptions = {
-    //scrollX: "2000px",
-    lengthMenu: [5, 10, 15, 20],
-    columnDefs: [
-        { className: "datatable-collumn-centered", targets: [6,7,8] },
-        { orderable: false, targets: [4, 8] },
-        { searchable: false, targets: [4, 5, 6, 7, 8] },
-        { width: "120px", targets: [8] },
-        { width: "65px", targets: [6, 7] }
-    ],
-    pageLength: 10,
-    destroy: true,
-    language: {
-        lengthMenu: "Mostrar _MENU_ registros por página",
-        zeroRecords: "Nenhum registro encontrado.",
-        info: "Mostrando de _START_ a _END_ de um total de _TOTAL_ registros.",
-        infoEmpty: "Nenhum registro encontrado.",
-        infoFiltered: "(filtrados desde _MAX_ registros totais)",
-        search: "Pesquisar:",
-        loadingRecords: "Carregando...",
-        paginate: {
-            first: "Primero",
-            last: "Último",
-            next: "Próximo",
-            previous: "Anterior"
-        }
-    }
-};
-
-$(document).ready( function () {
-  $('#exemple').DataTable(dataTableOptions);
-} );
-
-
+    });
 
   /**
    * Autoresize echart charts

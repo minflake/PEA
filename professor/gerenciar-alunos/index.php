@@ -41,9 +41,16 @@
   <!-- Template Main CSS File -->
   <link href="../../assets/css/style.css" rel="stylesheet">
 
-  <!-- JS Liberies -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <!-- DataTable files -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/rowreorder/1.4.1/css/rowReorder.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.5/js/dataTables.bootstrap5.min.js"></script>
+  <script src="https://cdn.datatables.net/rowreorder/1.4.1/js/dataTables.rowReorder.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+
   <script>
     function editarAlunos(ra) {
       fetch('processa-index.php', {
@@ -502,19 +509,11 @@
                 <div class="col-6">
                   <h5 class="card-title">Alunos Cadastrados</h5>
                 </div>
-                <div class="col-6 d-flex justify-content-end align-items-center">
-                  <div class="search-bar">
-                    <form class="search-form d-flex align-items-center" method="GET" action="processa-index.php">
-                      <input type="text" name="pesquisar" placeholder="Digite um RA, CPF ou nome" style="min-width: 220px;" value="<?php if (isset($_SESSION['input_pesquisa'])) {echo $_SESSION['input_pesquisa']; unset($_SESSION['input_pesquisa']);}?>">
-                      <button type="submit" title="Search"><i class="bi bi-search"></i></button>
-                    </form>
-                  </div>
-                </div>
               </div>
               
               
               <!-- Table with hoverable rows -->
-              <table class="table table-hover">
+              <table id="tabelaAlunos" class="table table-hover">
                 <thead>
                   <tr>
                     <th scope="col">RA</th>
@@ -542,7 +541,7 @@
                                   $query_listar_disc_matriculada = $pdo -> query("SELECT disc_matriculada.cod_disc, disc_matriculada.cod_aluno, disc_matriculada.cod_conceito, disc_matriculada.status_matricula, disciplina.nome_disc, conceito.conceito
     
                                   FROM disc_matriculada
-                                  LEFT JOIN conceito ON disc_matriculada.cod_conceito = conceito.conceito
+                                  LEFT JOIN conceito ON disc_matriculada.cod_aluno = conceito.cod_aluno
                                   LEFT JOIN disciplina ON disc_matriculada.cod_disc = disciplina.cod_disc
                                   WHERE cod_aluno = '" . $resultados[$i]['cod_aluno'] . "';");
                                   $query_listar_disc_matriculada = $query_listar_disc_matriculada -> fetchAll(PDO::FETCH_ASSOC);
@@ -595,7 +594,8 @@
                       aluno.sobrenome,
                       aluno.data_criacao,
                       curso.nome_curso,
-                      disc_matriculada.cod_conceito,
+                      conceito.cod_conceito,
+                      conceito.conceito,
                       disc_matriculada.status_matricula,
                       GROUP_CONCAT(DISTINCT disciplina.nome_disc  SEPARATOR ', ') AS nome_disc
                               
@@ -603,6 +603,7 @@
                       LEFT JOIN curso ON aluno.cod_curso = curso.cod_curso
                       LEFT JOIN disc_matriculada ON disc_matriculada.cod_aluno = aluno.cod_aluno
                       LEFT JOIN disciplina ON disciplina.cod_disc = disc_matriculada.cod_disc
+                      LEFT JOIN conceito ON aluno.cod_aluno = conceito.cod_aluno
                       GROUP BY
                       aluno.ra;
                     ");
@@ -617,12 +618,12 @@
                             echo "<td>";
 
                               require_once("../../conexao.php");
-                              $query_listar_disc_matriculada = $pdo -> query("SELECT disc_matriculada.cod_disc, disc_matriculada.cod_aluno, disc_matriculada.cod_conceito, disc_matriculada.status_matricula, disciplina.nome_disc, conceito.conceito
+                              $query_listar_disc_matriculada = $pdo -> query("SELECT disc_matriculada.cod_disc, disc_matriculada.cod_aluno, conceito.cod_conceito, disc_matriculada.status_matricula, disciplina.nome_disc, conceito.conceito
 
                               FROM disc_matriculada
-                              LEFT JOIN conceito ON disc_matriculada.cod_conceito = conceito.conceito
+                              LEFT JOIN conceito ON disc_matriculada.cod_aluno = conceito.cod_aluno
                               LEFT JOIN disciplina ON disc_matriculada.cod_disc = disciplina.cod_disc
-                              WHERE cod_aluno = '" . $query_listar_alunos[$i]['cod_aluno'] . "';");
+                              WHERE disc_matriculada.cod_aluno = '" . $query_listar_alunos[$i]['cod_aluno'] . "';");
                               $query_listar_disc_matriculada = $query_listar_disc_matriculada -> fetchAll(PDO::FETCH_ASSOC);
 
                               $linhas_disc_matriculada = count($query_listar_disc_matriculada);
@@ -696,11 +697,57 @@
   <script src="../../assets/vendor/tinymce/tinymce.min.js"></script>
   <script src="../../assets/vendor/php-email-form/validate.js"></script>
 
+  <!-- Scripts -->
+  <script>
+    /**
+     * Initiate Datatables
+     */
+    const tabelaAlunos = {
+      //scrollX: "2000px",
+      responsive: true,
+      rowReorder: {
+        selector: 'td:nth-child(2)'
+      },
+      lengthMenu: [5, 10, 15, 20],
+      columnDefs: [{
+          className: "datatable-collumn-centered",
+          targets: [5]
+        },
+        {
+          orderable: false,
+          targets: [3, 4, 5]
+        },
+        {
+          searchable: false,
+          targets: [4, 5]
+        },
+      ],
+      pageLength: 10,
+      destroy: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros por página",
+        zeroRecords: "Nenhum registro encontrado.",
+        info: "Mostrando de _START_ a _END_ de um total de _TOTAL_ registros.",
+        infoEmpty: "Nenhum registro encontrado.",
+        infoFiltered: "(filtrados desde _MAX_ registros totais)",
+        search: "Pesquisar:",
+        loadingRecords: "Carregando...",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "Próximo",
+          previous: "Anterior"
+        }
+      }
+    };
+
+    $(document).ready(function() {
+      $('#tabelaAlunos').DataTable(tabelaAlunos);
+    });
+  </script>
+
   <!-- Template Main JS File -->
   <script src="../../assets/js/main.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-
 </body>
 
 </html>

@@ -269,151 +269,151 @@
 <!-- ======= Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
 
-<ul class="sidebar-nav" id="sidebar-nav">
+  <ul class="sidebar-nav" id="sidebar-nav">
 
-  <li class="nav-heading">Ferramentas</li>
+    <li class="nav-heading">Ferramentas</li>
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="../index.php">
-      <i class="ri ri-home-2-line"></i>
-      <span>Home</span>
-    </a>
-  </li><!-- End Dashboard Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="../index.php">
+        <i class="ri ri-home-2-line"></i>
+        <span>Home</span>
+      </a>
+    </li><!-- End Dashboard Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="../prazos/index.php">
-      <i class="bi bi-clock"></i>
-      <span>Gerenciar Prazos</span>
-    </a>
-  </li><!-- End Blank Page Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="../prazos/index.php">
+        <i class="bi bi-clock"></i>
+        <span>Gerenciar Prazos</span>
+      </a>
+    </li><!-- End Blank Page Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="cadastrar-regulamento/index.php">
-      <i class="bi bi-file-earmark"></i>
-      <span>Cadastrar Regulamento</span>
-    </a>
-  </li><!-- End Blank Page Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="cadastrar-regulamento/index.php">
+        <i class="bi bi-file-earmark"></i>
+        <span>Cadastrar Regulamento</span>
+      </a>
+    </li><!-- End Blank Page Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link" data-bs-target="#forms-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-person"></i><span>Gerenciar Alunos</span><i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="forms-nav" class="nav-content collapse show" data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="../gerenciar-alunos/index.php" class="active">
-          <i class="bi bi-circle"></i><span>Visualizar Alunos</span>
-        </a>
-      </li>
-      <li>
-        <a href="../gerenciar-alunos/cadastrar-alunos.php">
-          <i class="bi bi-circle"></i><span>Cadastrar Alunos</span>
-        </a>
-      </li>
-      <li>
-        <a href="#">
-          <i class="bi bi-circle"></i><span>Importar Alunos</span>
-        </a>
-      </li>
-      <li>
-        <a href="#">
-          <i class="bi bi-circle"></i><span>Extrair Relatório</span>
-        </a>
-      </li>
-    </ul>
-  </li><!-- End Forms Nav -->
+    <li class="nav-item">
+      <a class="nav-link" data-bs-target="#forms-nav" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-person"></i><span>Gerenciar Alunos</span><i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="forms-nav" class="nav-content collapse show" data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="../gerenciar-alunos/index.php" class="active">
+            <i class="bi bi-circle"></i><span>Visualizar Alunos</span>
+          </a>
+        </li>
+        <li>
+          <a href="../gerenciar-alunos/cadastrar-alunos.php">
+            <i class="bi bi-circle"></i><span>Cadastrar Alunos</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <i class="bi bi-circle"></i><span>Importar Alunos</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <i class="bi bi-circle"></i><span>Extrair Relatório</span>
+          </a>
+        </li>
+      </ul>
+    </li><!-- End Forms Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#tables-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-book"></i><span>Gerenciar Atividades</span><i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="tables-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="../gerenciar-atividades/index.php">
-          <i class="bi bi-circle"></i><span>Visualizar Atividades</span>
-        </a>
-      </li>
-      <li>
-        <a href="../gerenciar-atividades/cadastrar-atividades.php">
-          <i class="bi bi-circle"></i><span>Cadastrar Atividades</span>
-        </a>
-      </li>
-      <li>
-        <a href="../gerenciar-atividades/arquivar-atividades.php">
-          <i class="bi bi-circle"></i><span>Arquivar Atividades</span>
-        </a>
-      </li>
-      <li>
-        <a href="#">
-          <i class="bi bi-circle"></i><span>Extrair Relatório</span>
-        </a>
-      </li>
-    </ul>
-  </li><!-- End Tables Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" data-bs-target="#tables-nav" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-book"></i><span>Gerenciar Atividades</span><i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="tables-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="../gerenciar-atividades/index.php">
+            <i class="bi bi-circle"></i><span>Visualizar Atividades</span>
+          </a>
+        </li>
+        <li>
+          <a href="../gerenciar-atividades/cadastrar-atividades.php">
+            <i class="bi bi-circle"></i><span>Cadastrar Atividades</span>
+          </a>
+        </li>
+        <li>
+          <a href="../gerenciar-atividades/arquivar-atividades.php">
+            <i class="bi bi-circle"></i><span>Arquivar Atividades</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <i class="bi bi-circle"></i><span>Extrair Relatório</span>
+          </a>
+        </li>
+      </ul>
+    </li><!-- End Tables Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
-      <i class="bi bi-file-earmark-text"></i><span>Gerenciar Devolutivas</span><i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="../gerenciar-relatorios/index.php">
-          <i class="bi bi-circle"></i><span>Vizualizar Relatórios</span>
-        </a>
-      </li>
-      <li>
-        <a href="../gerenciar-relatorios/dar-feedback.php">
-          <i class="bi bi-circle"></i><span>Dar feedback</span>
-        </a>
-      </li>
-      <li>
-        <a href="#">
-          <i class="bi bi-circle"></i><span>Extrair Relatório</span>
-        </a>
-      </li>
-    </ul>
-  </li><!-- End Icons Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" data-bs-target="#icons-nav" data-bs-toggle="collapse" href="#">
+        <i class="bi bi-file-earmark-text"></i><span>Gerenciar Devolutivas</span><i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="icons-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="../gerenciar-relatorios/index.php">
+            <i class="bi bi-circle"></i><span>Vizualizar Relatórios</span>
+          </a>
+        </li>
+        <li>
+          <a href="../gerenciar-relatorios/dar-feedback.php">
+            <i class="bi bi-circle"></i><span>Dar feedback</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <i class="bi bi-circle"></i><span>Extrair Relatório</span>
+          </a>
+        </li>
+      </ul>
+    </li><!-- End Icons Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
-      <i class="bx bxs-graduation"></i><span>Gerenciar Conceitos  </span><i class="bi bi-chevron-down ms-auto"></i>
-    </a>
-    <ul id="charts-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
-      <li>
-        <a href="../gerenciar-conceitos/index.php">
-          <i class="bi bi-circle"></i><span>Visualizar conceitos</span>
-        </a>
-      </li>
-      <li>
-        <a href="../gerenciar-conceitos/atribuir-conceito.php">
-          <i class="bi bi-circle"></i><span>Atribuir conceitos</span>
-        </a>
-      </li>
-    </ul>
-  </li><!-- End Charts Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" data-bs-target="#charts-nav" data-bs-toggle="collapse" href="#">
+        <i class="bx bxs-graduation"></i><span>Gerenciar Conceitos  </span><i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <ul id="charts-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+        <li>
+          <a href="../gerenciar-conceitos/index.php">
+            <i class="bi bi-circle"></i><span>Visualizar conceitos</span>
+          </a>
+        </li>
+        <li>
+          <a href="../gerenciar-conceitos/atribuir-conceito.php">
+            <i class="bi bi-circle"></i><span>Atribuir conceitos</span>
+          </a>
+        </li>
+      </ul>
+    </li><!-- End Charts Nav -->
 
-  <li class="nav-heading">Utilitários</li>
+    <li class="nav-heading">Utilitários</li>
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="#">
-      <i class="bi bi-person"></i>
-      <span>Perfil</span>
-    </a>
-  </li><!-- End Profile Page Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="#">
+        <i class="bi bi-person"></i>
+        <span>Perfil</span>
+      </a>
+    </li><!-- End Profile Page Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="#">
-      <i class="bi bi-question-circle"></i>
-      <span>Suporte</span>
-    </a>
-  </li><!-- End F.A.Q Page Nav -->
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="#">
+        <i class="bi bi-question-circle"></i>
+        <span>Suporte</span>
+      </a>
+    </li><!-- End F.A.Q Page Nav -->
 
-  <li class="nav-item">
-    <a class="nav-link collapsed" href="../../logout.php ">
-      <i class="bi bi-box-arrow-in-right"></i>
-      <span>Sair</span>
-    </a>
-  </li><!-- End Login Page Nav -->
-</ul>
+    <li class="nav-item">
+      <a class="nav-link collapsed" href="../../logout.php ">
+        <i class="bi bi-box-arrow-in-right"></i>
+        <span>Sair</span>
+      </a>
+    </li><!-- End Login Page Nav -->
+  </ul>
 
 </aside><!-- End Sidebar-->
 

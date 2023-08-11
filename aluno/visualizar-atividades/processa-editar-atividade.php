@@ -8,12 +8,19 @@ $data_atvd = $_POST["data_atvd"];
 $descricao_atvd = $_POST["descricao_atvd"];
 $anexo = $_FILES["anexo"];
 $disciplina = $_POST["disciplina"];
+$caminho_arquivo = $_POST["caminho_arquivo"];
+$cod_arquivo_velho = $_POST["cod_arquivo"];
+$cod_atvd_feita = $_POST["cod_atvd_feita"];
 
 // Verifique se o formulário foi enviado corretamente
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["anexo"])) {
+    //APAGAR ARQUIVO ANEXO EXISTENTE 
+    if (file_exists($caminho_arquivo)) {
+        unlink($caminho_arquivo);
+    }
+
     // Diretório de destino onde o arquivo será salvo
-    //$diretorio_destino = "/storage/ssd1/949/21117949/public_html/arquivos/aluno/atvd_feita/";
-    $diretorio_destino = "C:/wamp64/www/PEA/arquivos/aluno/atvd_feita/";
+    $diretorio_destino = "/storage/ssd1/949/21117949/public_html/arquivos/aluno/atvd_feita/";
 
     // Verifique se ocorreu algum erro durante o upload
     if ($anexo["error"] > 0) {
@@ -54,20 +61,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["anexo"])) {
 
                 //CONSULTA SE O ALUNO LOGADO JÁ TEM UM RELATÓRIO PARA A DISCIPLINA SELECIONADA
                 $query = $pdo->query("SELECT cod_relatorio FROM relatorio WHERE cod_disc = '$disciplina' AND cod_aluno ='" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "';");
-                $query_pega_relatorio = $query->fetchAll(PDO::FETCH_ASSOC);
+                $query = $query->fetchAll(PDO::FETCH_ASSOC);
                 
 
                 //VERIFICA SE A CONSULTA RETORNOU UM RELATÓRIO
-                if (empty($query_pega_relatorio)) {
+                if (empty($query)) {
                     //CRIA UM RELATÓRIO CASO NÃO EXISTA E ARMAZENA O CÓDIGO DO RELATÓRIO 
-                    $query = $pdo->query("INSERT INTO relatorio SET cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "', cod_disc = '" . $disciplina . "', semestre = '" . $_SESSION["dados_usuario"][0]["semestre"] . "';");
+                    $query = $pdo->query("INSERT INTO relatorio SET cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "', cod_disc = '" . $disciplina . "';");
                     $query = $query->fetchAll(PDO::FETCH_ASSOC);
 
                     $query = $pdo->query("SELECT MAX(relatorio.cod_relatorio) AS cod_relatorio FROM relatorio;");
                     $query = $query->fetchAll(PDO::FETCH_ASSOC);
                     $cod_relatorio = $query[0]["cod_relatorio"];
                 } else {
-                    $cod_relatorio = $query_pega_relatorio[0]["cod_relatorio"];
+                    $cod_relatorio = $query[0]["cod_relatorio"];
                 }
 
                 //CONSULTA O LIMITE DE HORAS POR ATIVIDADE E A CARGA MAXIMA DA ATIVIDADE ATUAL
@@ -130,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["anexo"])) {
                                 }
                             }
                         } else {
-                            if ($qntd_horas > $dados_horas_atvd[0]["limite_horas_atvd"]) {
+                            if ($qntd_horas > $dados_horas_atvd[0]["limite_horas_por_atvd"]) {
                                 $horas_validas = $dados_horas_atvd[0]["limite_horas_atvd"];
                             } else {
                                 $horas_validas = $qntd_horas;
@@ -147,13 +154,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["anexo"])) {
                     
                 }
                 //GUARDA OS DADOS RESTANTES NA TABELA ATVD_FEITA
-                $query = $pdo->prepare("INSERT INTO atvd_feita SET cod_atvd = :cod_atvd, cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "', cod_disc = :cod_disc, cod_arquivo = '$cod_arquivo', cod_relatorio = '$cod_relatorio', descricao_atvd = :descricao_atvd, data_atvd = :data_atvd, qntd_horas = :qntd_horas, horas_validas = $horas_validas");
+                $query = $pdo->prepare("UPDATE atvd_feita SET cod_atvd = :cod_atvd, cod_arquivo = '$cod_arquivo', cod_relatorio = '$cod_relatorio', descricao_atvd = :descricao_atvd, data_atvd = :data_atvd, qntd_horas = :qntd_horas, horas_validas = '$horas_validas', status_avaliacao = '0' WHERE cod_atvd_feita = '$cod_atvd_feita';");
                 $query->bindValue(":cod_atvd", $tipo_atvd);
-                $query->bindValue(":cod_disc", $disciplina);
                 $query->bindValue(":descricao_atvd", $descricao_atvd);
                 $query->bindValue(":data_atvd", $data_atvd);
                 $query->bindValue(":qntd_horas", $qntd_horas);
                 $query->execute();
+
+                //DELETA O REGISTRO DO ARQUIVO ANTIGO NO BANCO
+                $query = $pdo -> query("DELETE FROM arquivos WHERE cod_arquivo = '$cod_arquivo_velho';");
+                $query = $query -> fetchAll(PDO::FETCH_ASSOC);
 
                 $_SESSION['status_formulario'] = 'true';
                 header('Location: index.php');
@@ -164,5 +174,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["anexo"])) {
             }
         }
     }
+} else {
+    echo "arruma esse form bichao";
 }
-?>

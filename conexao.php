@@ -8,12 +8,10 @@
 
     try {
         $pdo = new PDO("mysql:dbname=$banco;host=$servidor;charset=utf8", "$usuario", "$senha");
+        // Define a timezone para a conexão atual (exemplo: UTC)
+        $query = $pdo -> query("SET time_zone = '-03:00';");
+        $query = $query -> fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $erro) {
         echo "Não conectado ao Banco de Dados <br><br> $erro";
     }
-
-    //VARIÁVEIS DO SISTEMA
-    $nome_sistema = "PEA";
-    $email_sistema = "nazarick07@gmail.com";
-    
 ?>

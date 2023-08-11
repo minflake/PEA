@@ -7,14 +7,43 @@ if (!isset($_SESSION["logado"]) || $_SESSION["logado"] !== true) {
 }
 
 require_once("../../conexao.php");
-$query = $pdo->query("SELECT atvd_feita.cod_atvd_feita, disciplina.nome_disc, atvd_a_fazer.tipo_atvd, atvd_feita.data_criacao, atvd_feita.qntd_horas, atvd_feita.horas_validas, atvd_feita.status_envio, atvd_feita.status_avaliacao, feedback.cod_feedback
-    
+
+if (isset($_GET["cod_atvd_feita"])) {
+    $cod_atvd_feita = $_GET["cod_atvd_feita"];
+
+    //CONSULTA OS DADOS DA ATIVIDADE FEITA
+    $query = $pdo->query("SELECT atvd_a_fazer.cod_atvd, atvd_a_fazer.tipo_atvd, atvd_feita.qntd_horas, atvd_feita.data_atvd, atvd_feita.descricao_atvd, disciplina.cod_disc, disciplina.nome_disc, arquivos.caminho_arquivo, arquivos.cod_arquivo, atvd_feita.status_avaliacao
+
     FROM atvd_feita
-    LEFT JOIN disciplina ON atvd_feita.cod_disc = disciplina.cod_disc
     LEFT JOIN atvd_a_fazer ON atvd_feita.cod_atvd = atvd_a_fazer.cod_atvd
-    LEFT JOIN feedback ON atvd_feita.cod_atvd_feita = feedback.cod_atvd_feita
-    WHERE atvd_feita.cod_aluno ='" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "';");
-$dados_atvd_feita = $query->fetchAll(PDO::FETCH_ASSOC);
+    LEFT JOIN disciplina ON atvd_feita.cod_disc = disciplina.cod_disc
+    LEFT JOIN arquivos ON atvd_feita.cod_arquivo = arquivos.cod_arquivo
+    WHERE atvd_feita.cod_atvd_feita = '$cod_atvd_feita';");
+    $dados_atvd_feita = $query->fetchAll(PDO::FETCH_ASSOC);
+
+    //CONSULTA OS FEEDBACKS DA ATIVIDADE FEITA
+    $query = $pdo->query("SELECT feedback.cod_feedback, feedback.feedback, feedback.descricao_feedback, feedback.data_criacao, professor.nome, professor.sobrenome
+    FROM feedback
+    LEFT JOIN professor ON feedback.cod_professor = professor.cod_professor
+    WHERE feedback.cod_atvd_feita = '$cod_atvd_feita';");
+    $dados_feedback = $query->fetchAll(PDO::FETCH_ASSOC);
+
+    //CONSULTAR NO BANCO DE DADOS EM QUAIS DISCIPLINAS O ALUNO ESTÁ MATRICULADO
+    $query = $pdo->query("SELECT * FROM disc_matriculada WHERE cod_aluno = '" . $_SESSION["dados_usuario"][0]["cod_aluno"] . "'" . "AND status_matricula != '0'");
+    $disc_matriculada = $query->fetchAll(PDO::FETCH_ASSOC);
+
+    //CONSULTAR NO BANCO AS ATIVIDADES QUE O ALUNO PODE FAZER COM BASE NO SEU CURSO E NO STATUS DE ARQUIVAMENTO
+    $query = $pdo->query("SELECT atvd_por_curso.cod_atvd, atvd_a_fazer.tipo_atvd, atvd_a_fazer.descricao_atvd, atvd_por_curso.carga_horaria_max, atvd_por_curso.limite_horas_atvd, atvd_a_fazer.categoria_atvd, atvd_a_fazer.tipo_doc_comprobatorio, atvd_por_curso.status_arquivamento
+
+    FROM atvd_por_curso
+    LEFT JOIN atvd_a_fazer ON atvd_por_curso.cod_atvd = atvd_a_fazer.cod_atvd
+    WHERE cod_curso = '" . $_SESSION["dados_usuario"][0]["cod_curso"] . "' AND status_arquivamento = '0';
+    ");
+    $dados_atvd_a_fazer = $query->fetchAll(PDO::FETCH_ASSOC);
+}
+
+
+
 
 ?>
 <!DOCTYPE html>
@@ -335,173 +364,193 @@ $dados_atvd_feita = $query->fetchAll(PDO::FETCH_ASSOC);
         </div><!-- End Page Title -->
 
         <section>
-
-            <div class="row gerenciar-alunos-nav justify-content-center">
-                <div class="col-3">
-                    <div class="card info-card sales-card">
-                        <a href="enviar-atividades.php">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-file-earmark-richtext"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="card-title">Enviar Atividades</h5>
-                                    </div>
-                                </div>
-
-                                <div class="card-text">
-                                    <p>
-                                        Envie as atividades que foram registradas para avaliação.
-                                    </p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="card info-card sales-card">
-                        <a href="enviar-atividades.php">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-file-earmark-richtext"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="card-title">Extrair Relatório</h5>
-                                    </div>
-                                </div>
-
-                                <div class="card-text">
-                                    <p>
-                                        Extraia um relatório de todas as atividades cadastradas.
-                                    </p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-
             <div class="row">
-                <div class="col-12">
+                <div class="col-md-8">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">Atividades Registradas</h5>
 
-                            <!-- Table with stripped rows -->
-                            <table id="exemple" class="table datatable display nowrap" width="100%">
-                                <thead>
-                                    <tr>
-                                    <tr>
-                                        <th class="datatable-collumn" scope="col">#</th>
-                                        <th class="datatable-collumn" scope="col">Disciplina</th>
-                                        <th class="datatable-collumn" scope="col">Tipo Atvd</th>
-                                        <th class="datatable-collumn" scope="col">Data</th>
-                                        <th class="datatable-collumn" scope="col">Enviada?</th>
-                                        <th class="datatable-collumn" scope="col">Feedback</th>
-                                        <th class="datatable-collumn" scope="col">Ações</th>
-                                    </tr>
-                                    </tr>
-                                </thead>
-                                <tbody>
+
+                            <!-- Floating Labels Form -->
+                            <form class="row g-3 needs-validation" action="processa-editar-atividade.php" method="post" enctype="multipart/form-data" novalidate>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="tipoAtvd" name="tipo_atvd" required>
+                                            <option value="" disabled>Selecione o Tipo da Atividade</option>
+                                            <?php
+                                            foreach ($dados_atvd_a_fazer as $key => $atvd_a_fazer) {
+                                                $selected = ($atvd_a_fazer["cod_atvd"] == $dados_atvd_feita[0]["cod_atvd"]) ? 'selected' : '';
+                                                echo "<option value='" . $atvd_a_fazer["cod_atvd"] . "' $selected>" . $atvd_a_fazer["tipo_atvd"] . "</option>";
+                                            }
+
+                                            ?>
+                                        </select>
+                                        <label for="tipoAtvd">Tipo de Atividade</label>
+                                        <div class="invalid-feedback">
+                                            Selecione o Tipo de Atividade.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="selectQtndHoras" name="qntd_horas" required>
+                                            <option value="" selected disabled>Selecione as Horas</option>
+                                            <?php
+                                            for ($j = 1; $j <= 40; $j++) {
+                                                $selected = ($j == $dados_atvd_feita[0]["qntd_horas"]) ? 'selected' : '';
+                                                echo "<option value='$j' $selected>$j</option>";
+                                            }
+                                            ?>
+                                        </select>
+                                        <label for="selectCargaMax">Qantidade de Horas</label>
+                                        <div class="invalid-feedback">
+                                            Informe a quantidade de horas.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="dataAtvd" name="data_atvd" placeholder="Data da Atividade" value="<?php echo $dados_atvd_feita[0]["data_atvd"]; ?>" required>
+                                        <label for="dataAtvd">Data de Realização da Atividade</label>
+                                        <div class="invalid-feedback">
+                                            Informe a data.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" placeholder="" id="floatingDescricaoAtividade" style="height: 132px;" name="descricao_atvd" required><?php echo $dados_atvd_feita[0]["descricao_atvd"]; ?></textarea>
+                                        <label for="floatingPassword">Descrição da Atividade</label>
+                                        <div class="invalid-feedback">
+                                            Insira a descrição da atividade.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-control">
+                                        <label for="anexo" class="col-md-12 col-form-label">Envie um Comprovante</label>
+                                        <div class="col-md-12">
+                                            <input class="form-control" type="file" id="anexo" name="anexo" accept=".jpg, .jpeg, .png, .pdf" required>
+                                        </div>
+                                        <div class="invalid-feedback">
+                                            Insira um anexo.
+                                        </div>
+                                        <div class="form-input-description">
+                                            Extensões aceitas: <span class="form-file-format">.jpg, .jpeg, .png e .pdf.</span>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="selectDisciplina" name="disciplina" required>
+                                            <option value="" disabled>Selecione a Disciplina</option>
+                                            <option value="<?php echo $dados_atvd_feita[0]["cod_disc"] ?>" selected><?php echo $dados_atvd_feita[0]["nome_disc"] ?></option>
+                                        </select>
+                                        <label for="selectCargaMax">Disciplina</label>
+                                        <div class="invalid-feedback">
+                                            Informe a disciplina.
+                                        </div>
+                                    </div>
+                                </div>
+                                <input name="caminho_arquivo" type="text" value="<?php echo $dados_atvd_feita[0]["caminho_arquivo"]; ?>" hidden>
+                                <input name="cod_arquivo" type="number" value="<?php echo $dados_atvd_feita[0]["cod_arquivo"]; ?>" hidden>
+                                <input name="cod_atvd_feita" type="number" value="<?php echo $cod_atvd_feita; ?>" hidden>
+                                <div class=" row justify-content-center text-center">
                                     <?php
-                                    foreach ($dados_atvd_feita as $atvd_feita) {
+                                    if ($dados_atvd_feita[0]["status_avaliacao"] == 1) {
+                                        $linhas_dados_feedback = count($dados_feedback);
+                                        if (!empty($dados_feedback) && $dados_feedback[$linhas_dados_feedback - 1]["feedback"] == 0) {
+
                                     ?>
-                                        <tr>
-                                            <th scope='row'>
-                                                <?php echo $atvd_feita["cod_atvd_feita"]; ?>
-                                            </th>
-                                            <td>
-                                                <?php echo $atvd_feita["nome_disc"]; ?>
-                                            </td>
-                                            <td>
-                                                <?php echo $atvd_feita["tipo_atvd"]; ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                $formato_entrada = 'Y-m-d';
-                                                $data_criacao = DateTime::createFromFormat($formato_entrada, $atvd_feita['data_criacao']);
-                                                $data_criacao = $data_criacao->format('d/m/Y');
-                                                echo $data_criacao;
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                if ($atvd_feita["status_envio"] == 0) {
-                                                    echo "<span class='badge bg-warning text-dark'>Não enviada</span>";
-                                                } else {
-                                                    echo "<span class='badge bg-success'>Enviada</span>";
-                                                }
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                if ($atvd_feita["status_avaliacao"] == 1) {
-                                                    echo "<span class='badge bg-success'>Recebido</span>";
-                                                } else {
-                                                    echo "<span class='badge bg-warning text-dark'>Não recebido</span>";
-                                                }
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <div class="row" style="width: 140px; margin: 0; padding: 8px;">
-                                                    <?php
-                                                    if (!isset($atvd_feita["cod_feedback"]) && $atvd_feita["status_envio"] == 0) {
-                                                    ?>
-                                                        <div class="div-datatable-collumn col-4">
-                                                            <button class="btn btn-sm btn-outline-primary">
-                                                                <i class="bi bi-pencil-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    } else {
-                                                    ?>
-                                                        <div class="div-datatable-collumn col-4" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Aguarde o feedback para poder editar!">
-                                                            <button class="btn btn-sm btn-outline-primary" disabled>
-                                                                <i class="bi bi-pencil-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    }
-                                                    ?>
-                                                    <div class="div-datatable-collumn col-4">
-                                                        <form action="editar-atividade.php" method="get">
-                                                            <input name="cod_atvd_feita" type="number" value="<?php echo $atvd_feita["cod_atvd_feita"]; ?>" hidden>
-                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                                                <i class="bi bi-eye-fill"></i>
-                                                            </button>
-                                                        </form>
-                                                    </div>
-                                                    <?php
-                                                    if ($atvd_feita["status_envio"] == 0) {
-                                                    ?>
-                                                        <div class="div-datatable-collumn">
-                                                            <button class="btn btn-sm btn-outline-danger">
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    } else {
-                                                    ?>
-                                                        <div class="div-datatable-collumn" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-original-title="Atividade já enviada, não é possível excluir!">
-                                                            <button class="btn btn-sm btn-outline-danger" disabled>
-                                                                <i class="bi bi-trash-fill"></i>
-                                                            </button>
-                                                        </div>
-                                                    <?php
-                                                    }
-                                                    ?>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            <div class="col-3">
+                                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                            </div>
+                                        <?php
+                                        } else {
+                                        ?>
+                                            <div class="col-4" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Atividade já aprovada, não é possível editar.">
+                                                <button type="submit" class="btn btn-primary" disabled>Salvar alterações</button>
+                                            </div>
+                                        <?php
+                                        }
+                                    } else {
+                                        ?>
+
+                                        <div class="col-4" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Aguarde o feedback para poder editar a atividade.">
+                                            <button type="submit" class="btn btn-primary" disabled>Salvar alterações</button>
+                                        </div>
+
                                     <?php
                                     }
                                     ?>
-                                </tbody>
-                            </table>
-                            <!-- End Table with stripped rows -->
+
+
+                                </div>
+                            </form><!-- End floating Labels Form -->
+
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Feedback</h5>
+
+                            <?php
+                            if (!empty($dados_feedback)) {
+                            ?>
+
+                                <!-- Default Accordion -->
+                                <div class="accordion" id="accordionExample">
+                                    <?php
+                                    foreach ($dados_feedback as $key => $value) {
+                                        //TRATA E CONVERTE A ENTRADA "INICIO DAS ENTREGAS" PARA STRING
+                                        $formato_banco = "Y-m-d H:i:s";
+                                        $data_criacao = DateTime::createFromFormat($formato_banco, $value['data_criacao']);
+                                        $data_criacao = $data_criacao->format('d/m/Y - H:i:s');
+                                    ?>
+
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="headingOne">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?php echo $key; ?>" aria-expanded="false" aria-controls="collapse<?php echo $key; ?>">
+                                                    Feedback <?php echo $key + 1 . " - " . $data_criacao; ?>
+                                                </button>
+                                            </h2>
+                                            <div id="collapse<?php echo $key; ?>" class="accordion-collapse collapse" aria-labelledby="heading<?php echo $key; ?>" data-bs-parent="#accordionExample">
+                                                <div class="accordion-body">
+                                                    <strong>Feedback por: </strong><?php echo $value["nome"] . " " . $value["sobrenome"]; ?><br>
+                                                    <strong>Status: </strong>
+
+                                                    <?php
+                                                    if ($value["feedback"] == 1) {
+                                                        echo "<span class='badge bg-success'>Aprovada</span>";
+                                                    } else {
+                                                        echo "<span class='badge bg-danger'>Reprovada</span>";
+                                                    }
+                                                    ?>
+                                                    <br><br>
+                                                    <?php echo $value["descricao_feedback"]; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    <?php
+                                    }
+                                    ?>
+
+                                </div><!-- End Default Accordion Example -->
+
+                            <?php
+                            } else {
+                                echo "Nenhum feedback dado. Envie a atividade e aguarde a devolutiva de seu professor.";
+                            }
+                            ?>
+
+
                         </div>
                     </div>
                 </div>
@@ -572,58 +621,6 @@ $dados_atvd_feita = $query->fetchAll(PDO::FETCH_ASSOC);
             Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
         </div>
     </footer><!-- End Footer -->
-
-
-    <script>
-        /**
-         * Initiate Datatables
-         */
-        const dataTableOptions = {
-            responsive: true,
-            rowReorder: {
-                selector: 'td:nth-child(2)'
-            },
-            lengthMenu: [5, 10, 15, 20],
-            columnDefs: [{
-                    orderable: false,
-                    targets: [6]
-                },
-                {
-                    searchable: false,
-                    targets: [2, 4, 5, 6]
-                },
-                {
-                    width: "120px",
-                    targets: [6]
-                },
-                {
-                    width: "65px",
-                    targets: [4, 5]
-                }
-            ],
-            pageLength: 10,
-            destroy: true,
-            language: {
-                lengthMenu: "Mostrar _MENU_ registros por página",
-                zeroRecords: "Nenhum registro encontrado.",
-                info: "Mostrando de _START_ a _END_ de um total de _TOTAL_ registros.",
-                infoEmpty: "Nenhum registro encontrado.",
-                infoFiltered: "(filtrados desde _MAX_ registros totais)",
-                search: "Pesquisar:",
-                loadingRecords: "Carregando...",
-                paginate: {
-                    first: "Primero",
-                    last: "Último",
-                    next: "Próximo",
-                    previous: "Anterior"
-                }
-            }
-        };
-
-        $(document).ready(function() {
-            $('#exemple').DataTable(dataTableOptions);
-        });
-    </script>
 
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 

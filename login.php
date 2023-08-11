@@ -18,7 +18,7 @@
     }
 
         //CONSULTA E VERIFICA SE OS DADOS INSERIDOS EXISEM NO BANCO
-        $query_pega_cpf = $pdo -> prepare ("SELECT usuario.cod_usuario, usuario.senha, usuario.perfil, usuario.status_usuario,
+        $query_pega_cpf = $pdo -> prepare ("SELECT usuario.cod_usuario, usuario.senha, usuario.perfil, usuario.status_usuario, usuario.primeiro_acesso,
         COALESCE (professor.cpf, aluno.cpf, adm.cpf) AS cpf
 
         FROM usuario
@@ -38,22 +38,27 @@
         $total_registros = count($res_pega_cpf);
         if ($total_registros == 1) {
             $status_usuario = $res_pega_cpf[0]["status_usuario"];
+            $primeiro_acesso =$res_pega_cpf[0]["primeiro_acesso"];
             $perfil = $res_pega_cpf[0]["perfil"];
 
             switch ($perfil) {
                 case 'ADM':
                     if ($status_usuario == 1) {
-
                         $_SESSION["cod_usuario"] = $res_pega_cpf[0]["cod_usuario"];
                         $_SESSION["perfil"] = $res_pega_cpf[0]["perfil"];
                         $_SESSION["logado"] = true;
 
                         $pega_dados_usuario = $pdo->query("SELECT cod_adm, nome, sobrenome, genero FROM adm WHERE cod_usuario = '{$_SESSION["cod_usuario"]}'");
                         $_SESSION["dados_usuario"] = $pega_dados_usuario -> fetchAll(PDO::FETCH_ASSOC);
-                        echo "<script>window.location = 'adm'</script>";
+
+                        if ($primeiro_acesso == 1) {
+                            header('Location: primeiro-acesso-foto-perfil.php');
+                        } else {
+                            header('Location: adm/index.php');
+                        }
                     } else {
-                        echo "<script>window.alert('Usuário inativo. Contate o administrador.')</script>";
-                        echo "<script>window.location = 'index.php'</script>";
+                        $_SESSION["status_formulario"] = true;
+                        header('Location: index.php');
                         exit();
                     }
                     break;
@@ -66,10 +71,14 @@
 
                         $pega_dados_usuario = $pdo->query("SELECT cod_professor, cod_curso, nome, sobrenome, genero FROM professor WHERE cod_usuario = '{$_SESSION["cod_usuario"]}'");
                         $_SESSION["dados_usuario"] = $pega_dados_usuario -> fetchAll(PDO::FETCH_ASSOC); 
-                        echo "<script>window.location = 'professor'</script>";
+                        if ($primeiro_acesso == 1) {
+                            header('Location: primeiro-acesso-foto-perfil.php');
+                        } else {
+                            header('Location: professor/index.php');
+                        }
                     } else {
-                        echo "<script>window.alert('Usuário inativo. Contate o administrador.')</script>";
-                        echo "<script>window.location = 'index.php'</script>";
+                        $_SESSION["status_formulario"] = true;
+                        header('Location: index.php');
                         exit();
                     }
                     break;
@@ -80,20 +89,25 @@
                         $_SESSION["perfil"] = $res_pega_cpf[0]["perfil"];
                         $_SESSION["logado"] = true;
 
-                        $pega_dados_usuario = $pdo->query("SELECT cod_aluno, cod_curso, nome, sobrenome, genero FROM aluno WHERE cod_usuario = '{$_SESSION["cod_usuario"]}'");
+                        $pega_dados_usuario = $pdo->query("SELECT cod_aluno, cod_curso, nome, sobrenome, genero, semestre FROM aluno WHERE cod_usuario = '{$_SESSION["cod_usuario"]}'");
                         $_SESSION["dados_usuario"] = $pega_dados_usuario -> fetchAll(PDO::FETCH_ASSOC); 
-                        echo "<script>window.location = 'aluno'</script>";
+                        
+                        if ($primeiro_acesso == 1) {
+                            header('Location: primeiro-acesso-foto-perfil.php');
+                        } else {
+                            header('Location: aluno/index.php');
+                        }
                     } else {
-                        echo "<script>window.alert('Usuário inativo. Contate o administrador.')</script>";
-                        echo "<script>window.location = 'index.php'</script>";
+                        $_SESSION["status_formulario"] = true;
+                        header('Location: index.php');
                         exit();
                     }
                     break;
 
             }
         } else {
-            echo "<script>window.alert('Usuário ou senha incorretos! Tente novamente ou contate o administrador.')</script>";
-            echo "<script>window.location = 'index.php'</script>";
+            $_SESSION["status_formulario"] = false;
+            header('Location: index.php');
             exit();
         }
 
